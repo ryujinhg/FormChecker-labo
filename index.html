@@ -1,281 +1,513 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no">
+
   <title>FormChecker - フォームチェッカー</title>
 
-  <!-- PWA設定 -->
-  <link rel="manifest" href="manifest.json?v=2.2.0">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <meta name="theme-color" content="#1e1e1e">
+
+  <!-- =========================================================
+       PWA設定
+       ========================================================= -->
+
+  <link
+    rel="manifest"
+    href="manifest.json?v=2.2.0">
+
+  <link
+    rel="apple-touch-icon"
+    href="icon-192.png">
+
+  <meta
+    name="theme-color"
+    content="#1e1e1e">
+
 
   <style>
 
     /* =========================================================
-       基本設定
+       共通
        ========================================================= */
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+
       user-select: none;
       -webkit-user-select: none;
     }
 
+
     html,
     body {
+
       width: 100%;
       height: 100%;
+
       overflow: hidden;
+
       background-color: #121212;
       color: #fff;
-      font-family: -apple-system, sans-serif;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     }
 
+
     body {
+
       display: flex;
       flex-direction: column;
       align-items: center;
+
       padding: 1.5%;
       gap: 8px;
     }
 
+
     /* =========================================================
-       ヘッダー
+       タイトル
        ========================================================= */
 
     header {
+
       width: 100%;
+
       text-align: center;
+
       flex-shrink: 0;
     }
 
+
     h1 {
+
       font-size: 1.2rem;
+
       color: #4da6ff;
+
       letter-spacing: 1px;
     }
+
 
     /* =========================================================
        ステータス
        ========================================================= */
 
     .status-banner {
+
       width: 100%;
+
       background: #1e1e1e;
+
       border: 1px solid #333;
+
       border-radius: 10px;
+
       padding: 10px;
+
       text-align: center;
+
       display: flex;
       flex-direction: column;
       align-items: center;
+
       gap: 6px;
+
       flex-shrink: 0;
     }
 
+
     .status-text {
+
       font-size: 1.05rem;
+
       font-weight: bold;
+
       color: #00ffcc;
     }
 
+
     .status-sub {
+
       font-size: 0.75rem;
+
       color: #aaa;
+
       line-height: 1.5;
     }
 
+
     .btn-top-action {
+
       width: 100%;
+
       padding: 10px;
+
       font-size: 1rem;
+
       font-weight: bold;
+
       border: none;
+
       border-radius: 6px;
+
       cursor: pointer;
-      transition: background 0.2s;
+
+      transition:
+        background 0.2s;
     }
 
+
     .btn-start {
+
       background: #007bff;
+
       color: white;
     }
 
+
     .btn-reset {
+
       background: #3a3a3c;
+
       color: #bbb;
     }
+
 
     /* =========================================================
        カメラ許可案内
        ========================================================= */
 
     .camera-help {
+
       display: none;
+
       width: 100%;
+
       margin-top: 4px;
     }
 
+
     .camera-help.show {
+
       display: block;
     }
 
+
     .camera-help-title {
+
       font-size: 1rem;
+
       font-weight: bold;
+
       color: #ffcc00;
+
       margin-bottom: 6px;
     }
 
+
     .camera-help-message {
+
       font-size: 0.78rem;
+
       color: #ddd;
+
       line-height: 1.55;
+
       margin-bottom: 8px;
     }
 
+
     .camera-help-details {
+
       display: none;
+
       background: #292929;
+
       border-radius: 7px;
+
       padding: 9px;
+
       margin-top: 6px;
+
       text-align: left;
     }
 
+
     .camera-help-details.show {
+
       display: block;
     }
 
+
     .camera-help-details h3 {
+
       font-size: 0.82rem;
+
       color: #4da6ff;
+
       margin-bottom: 5px;
     }
 
+
     .camera-help-details p {
+
       font-size: 0.74rem;
+
       color: #ddd;
+
       line-height: 1.6;
+
       margin-bottom: 8px;
     }
 
+
     .camera-help-details p:last-child {
+
       margin-bottom: 0;
     }
 
+
     .btn-help {
+
       width: 100%;
+
       padding: 8px;
+
       border: none;
+
       border-radius: 6px;
+
       background: #3a3a3c;
+
       color: #fff;
+
       font-size: 0.82rem;
+
       font-weight: bold;
+
       cursor: pointer;
     }
 
+
     .btn-retry {
+
       background: #007bff;
+
       color: white;
     }
+
 
     /* =========================================================
        メイン映像エリア
        ========================================================= */
 
     .video-container {
+
       position: relative;
+
       width: 100%;
+
       flex: 1;
+
       min-height: 40vh;
+
       background: #000;
+
       border-radius: 12px;
+
       overflow: hidden;
     }
 
+
     video,
     canvas {
+
       position: absolute;
+
       top: 0;
       left: 0;
+
       width: 100%;
       height: 100%;
+
       object-fit: cover;
     }
 
+
     /* =========================================================
-       ★ 実fps表示
+       カメラ診断モード
        
-       カメラ映像の左上に表示する。
-       今回の測定では「要求したfps」ではなく、
-       実際にvideoへ届いたフレームを数える。
+       ★今回追加
+       
+       左上に常時表示。
+       カメラ起動前は「カメラ未起動」。
+       
+       実際のカメラ情報を観察するための
+       開発・確認用表示。
        ========================================================= */
 
-    .fps-indicator {
+    .camera-diagnostic {
+
       position: absolute;
+
       top: 10px;
       left: 10px;
 
-      background: rgba(0, 0, 0, 0.65);
-      color: #00ff66;
+      z-index: 40;
 
-      padding: 5px 9px;
-      border-radius: 6px;
+      min-width: 245px;
 
-      font-size: 0.78rem;
-      font-weight: bold;
+      max-width: min(
+        380px,
+        75vw
+      );
+
+      max-height: 75vh;
+
+      padding: 8px 10px;
+
+      background:
+        rgba(0, 0, 0, 0.72);
+
+      border-radius: 8px;
+
+      color: #fff;
+
+      font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+      font-size: 0.70rem;
 
       line-height: 1.45;
 
-      z-index: 40;
+      overflow-y: auto;
 
-      pointer-events: none;
-
-      white-space: nowrap;
+      pointer-events: auto;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+      box-shadow:
+        0 3px 12px
+        rgba(0, 0, 0, 0.35);
     }
 
-    .fps-value {
+
+    .diagnostic-title {
+
       color: #00ff66;
+
+      font-size: 0.82rem;
+
+      font-weight: bold;
+
+      margin-bottom: 5px;
+
+      padding-bottom: 4px;
+
+      border-bottom:
+        1px solid
+        rgba(255,255,255,0.25);
     }
 
-    .fps-info {
-      color: #aaa;
-      font-size: 0.68rem;
-      font-weight: normal;
+
+    .diagnostic-section {
+
+      color: #4da6ff;
+
+      font-weight: bold;
+
+      margin-top: 6px;
+
+      margin-bottom: 1px;
     }
+
+
+    .diagnostic-value {
+
+      color: #fff;
+    }
+
+
+    .diagnostic-important {
+
+      color: #00ff66;
+
+      font-weight: bold;
+    }
+
+
+    .diagnostic-warning {
+
+      color: #ffcc00;
+    }
+
+
+    .diagnostic-unavailable {
+
+      color: #888;
+    }
+
 
     /* =========================================================
        録画表示
        ========================================================= */
 
     .rec-indicator {
+
       position: absolute;
+
       top: 10px;
       left: 10px;
-      background: rgba(255, 0, 0, 0.8);
+
+      background:
+        rgba(255, 0, 0, 0.8);
+
       color: white;
+
       padding: 4px 10px;
+
       border-radius: 20px;
+
       font-weight: bold;
+
       font-size: 0.85rem;
+
       display: none;
+
       align-items: center;
+
       gap: 6px;
+
       z-index: 15;
     }
 
+
     .rec-dot {
+
       width: 8px;
       height: 8px;
+
       background: white;
+
       border-radius: 50%;
-      animation: blink 0.8s infinite alternate;
+
+      animation:
+        blink 0.8s
+        infinite alternate;
     }
+
 
     @keyframes blink {
 
@@ -286,52 +518,68 @@
       to {
         opacity: 0.2;
       }
-
     }
 
-    /* =========================================================
-       モーション検知表示
-       ========================================================= */
 
     .motion-zone-text {
+
       position: absolute;
+
       top: 10px;
       right: 10px;
+
       font-weight: bold;
+
       font-size: 0.8rem;
+
       color: #ffd700;
-      background: rgba(0, 0, 0, 0.5);
+
+      background:
+        rgba(0, 0, 0, 0.5);
+
       padding: 4px 8px;
+
       border-radius: 4px;
+
       pointer-events: none;
+
       z-index: 10;
+
       letter-spacing: 0.5px;
     }
 
+
     .motion-zone-text.ready {
+
       color: #ff00ff;
     }
 
-    /* =========================================================
-       カウントダウン
-       ========================================================= */
 
     .countdown-overlay {
+
       position: absolute;
+
       top: 0;
       left: 0;
+
       width: 100%;
       height: 100%;
 
       display: flex;
+
       align-items: center;
+
       justify-content: center;
 
       font-size: 5rem;
+
       font-weight: 900;
+
       color: #ff3366;
 
-      text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+      text-shadow:
+        0 0 20px
+        rgba(0, 0, 0, 0.8);
 
       z-index: 20;
 
@@ -339,80 +587,95 @@
 
       opacity: 0;
 
-      transition: opacity 0.2s ease;
+      transition:
+        opacity 0.2s ease;
     }
 
+
     .countdown-overlay.show {
+
       opacity: 1;
     }
+
 
     /* =========================================================
        プログレスバー
        ========================================================= */
 
     .progress-bar-container {
+
       position: absolute;
+
       bottom: 0;
       left: 0;
+
       width: 100%;
+
       height: 6px;
 
-      background: rgba(255, 255, 255, 0.2);
+      background:
+        rgba(255,255,255,0.2);
 
       z-index: 25;
 
       display: none;
     }
 
+
     .progress-bar {
+
       width: 0%;
+
       height: 100%;
+
       background: #ff3366;
     }
 
+
     .progress-bar.animate-rec {
+
       width: 100%;
+
       transition-property: width;
+
       transition-timing-function: linear;
     }
+
 
     /* =========================================================
        設定パネル
        ========================================================= */
 
     .controls-panel {
+
       width: 100%;
+
       background: #1e1e1e;
+
       border-radius: 10px;
+
       padding: 8px;
 
       display: flex;
+
       flex-direction: column;
 
       gap: 4px;
 
       flex-shrink: 0;
 
-      transition: opacity 0.2s ease;
+      transition:
+        opacity 0.2s ease;
     }
 
+
     .controls-panel.hidden {
+
       display: none;
     }
 
-    .setting-row {
 
-      /*
-       * 縦画面でも横画面と同じ考え方にする。
-       *
-       * ① ラベル
-       * ② -
-       * ③ 数値
-       * ④ +
-       *
-       * ラベル部分を1frにすることで、
-       * 「録画時間」などがその領域の中央に配置される。
-       */
+    .setting-row {
 
       display: grid;
 
@@ -433,6 +696,7 @@
       border-radius: 6px;
     }
 
+
     .setting-label {
 
       font-size: 0.85rem;
@@ -441,31 +705,38 @@
 
       white-space: nowrap;
 
-      /*
-       * ラベル領域の中央に文字を置く。
-       */
       text-align: center;
     }
 
+
     .stepper {
+
       display: contents;
     }
 
+
     .stepper .btn-step:first-child {
+
       grid-column: 2;
     }
 
+
     .stepper .value-display {
+
       grid-column: 3;
     }
 
+
     .stepper .btn-step:last-child {
+
       grid-column: 4;
     }
 
+
     .btn-step {
 
-      width: 44px;
+      width: 36px;
+
       height: 36px;
 
       border-radius: 6px;
@@ -483,14 +754,14 @@
       cursor: pointer;
     }
 
+
     .btn-step:active {
+
       background: #555;
     }
 
-    .value-display {
 
-      width: 80px;
-      min-width: 80px;
+    .value-display {
 
       font-size: 0.9rem;
 
@@ -498,8 +769,27 @@
 
       color: #00d2ff;
 
+      min-width: 52px;
+
       text-align: center;
     }
+
+
+    /* =========================================================
+       縦画面
+       ========================================================= */
+
+    @media (max-aspect-ratio: 1/1) {
+
+      .controls-panel {
+
+        position: relative;
+
+        z-index: 30;
+      }
+
+    }
+
 
     /* =========================================================
        横画面
@@ -515,6 +805,7 @@
 
         overflow: hidden;
       }
+
 
       .video-container {
 
@@ -533,6 +824,7 @@
         z-index: 1;
       }
 
+
       video,
       canvas {
 
@@ -541,6 +833,7 @@
 
         object-fit: cover;
       }
+
 
       header {
 
@@ -561,9 +854,12 @@
         pointer-events: none;
       }
 
+
       h1 {
+
         font-size: 1.4rem;
       }
+
 
       .status-banner {
 
@@ -581,24 +877,34 @@
 
         z-index: 50;
 
-        background: rgba(30, 30, 30, 0.94);
+        background:
+          rgba(30,30,30,0.94);
 
         border: 1px solid #333;
 
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+        box-shadow:
+          0 4px 15px
+          rgba(0,0,0,0.35);
       }
 
+
       .btn-top-action {
+
         padding: 8px;
       }
 
+
       .status-text {
+
         font-size: 1.05rem;
       }
 
+
       .status-sub {
+
         font-size: 0.8rem;
       }
+
 
       .controls-panel {
 
@@ -616,18 +922,34 @@
 
         z-index: 50;
 
-        background: rgba(30, 30, 30, 0.94);
+        background:
+          rgba(30,30,30,0.94);
 
         border: 1px solid #333;
 
         border-radius: 12px;
 
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+        box-shadow:
+          0 4px 20px
+          rgba(0,0,0,0.45);
 
         gap: 5px;
       }
 
+
       .setting-row {
+
+        display: grid;
+
+        grid-template-columns:
+          minmax(100px, 1fr)
+          44px
+          80px
+          44px;
+
+        column-gap: 8px;
+
+        align-items: center;
 
         min-height: 44px;
 
@@ -636,21 +958,33 @@
         border-radius: 7px;
       }
 
+
       .setting-label {
+
+        grid-column: 1;
+
         font-size: 0.95rem;
+
+        white-space: nowrap;
+
+        text-align: center;
       }
+
 
       .btn-step {
 
         width: 44px;
+
         height: 38px;
 
         font-size: 1.1rem;
       }
 
+
       .value-display {
 
         width: 80px;
+
         min-width: 80px;
 
         font-size: 0.95rem;
@@ -658,34 +992,34 @@
         text-align: center;
       }
 
+
       .rec-indicator {
 
         top: 15px;
+
         left: 15px;
       }
+
 
       .motion-zone-text {
 
         top: 15px;
+
         right: 15px;
       }
 
-      /*
-       * 横画面ではfps表示も少し内側へ。
-       */
-      .fps-indicator {
-
-        top: 15px;
-        left: 15px;
-      }
 
       .countdown-overlay {
+
         font-size: 7rem;
       }
 
+
       .progress-bar-container {
+
         height: 6px;
       }
+
 
       .camera-help-details {
 
@@ -694,12 +1028,29 @@
         overflow-y: auto;
       }
 
+
+      .camera-diagnostic {
+
+        top: 15px;
+
+        left: 15px;
+
+        min-width: 270px;
+
+        max-width: 390px;
+
+        font-size: 0.74rem;
+      }
+
     }
 
   </style>
+
 </head>
 
+
 <body>
+
 
   <!-- =========================================================
        ① タイトル
@@ -720,6 +1071,7 @@
 
   <div class="status-banner">
 
+
     <button
       id="mainBtn"
       class="btn-top-action btn-start"
@@ -738,6 +1090,7 @@
         style="display:none;">
 
       </div>
+
 
       <div
         id="statusSub"
@@ -758,6 +1111,7 @@
       id="cameraHelp"
       class="camera-help">
 
+
       <div class="camera-help-title">
 
         カメラの許可が必要です
@@ -769,7 +1123,8 @@
         id="cameraHelpMessage"
         class="camera-help-message">
 
-        FormCheckerはバッティングフォームを撮影するためにカメラを使用します。
+        FormCheckerはバッティングフォームを
+        撮影するためにカメラを使用します。
 
       </div>
 
@@ -806,23 +1161,40 @@
             Android / Chromeの場合
           </h3>
 
-          <p>
-            まず、上の「カメラを許可してもう一度試す」を押してください。
-            Chromeからカメラの許可を求められたら「許可」を選んでください。
-          </p>
 
           <p>
+
+            まず、上の
+            「カメラを許可してもう一度試す」
+            を押してください。
+
+            Chromeからカメラの許可を求められたら
+            「許可」を選んでください。
+
+          </p>
+
+
+          <p>
+
             それでも表示されない場合：<br>
+
             ① Chrome右上の「︙」<br>
             ②「設定」<br>
             ③「サイトの設定」<br>
             ④「カメラ」<br>
-            ⑤ FormCheckerのサイトが「ブロック中」なら「許可」
+            ⑤ FormCheckerのサイトが
+            「ブロック中」なら「許可」
+
           </p>
 
+
           <p>
-            設定を変更したら、この画面に戻って
-            「カメラを許可してもう一度試す」を押してください。
+
+            設定を変更したら、
+            この画面に戻って
+            「カメラを許可してもう一度試す」
+            を押してください。
+
           </p>
 
         </div>
@@ -834,20 +1206,36 @@
             iPhone / Safariの場合
           </h3>
 
-          <p>
-            まず、上の「カメラを許可してもう一度試す」を押してください。
-            Safariからカメラの許可を求められたら「許可」を選んでください。
-          </p>
 
           <p>
-            それでも表示されない場合は、SafariのWebサイト設定で
-            カメラが「拒否」になっていないか確認してください。
+
+            まず、上の
+            「カメラを許可してもう一度試す」
+            を押してください。
+
+            Safariからカメラの許可を求められたら
+            「許可」を選んでください。
+
           </p>
 
+
           <p>
+
+            それでも表示されない場合は、
+            SafariのWebサイト設定で
+            カメラが「拒否」になっていないか
+            確認してください。
+
+          </p>
+
+
+          <p>
+
             SafariでFormCheckerを開いた状態から、
-            ページメニューの「Webサイトの設定」で
+            ページメニューの
+            「Webサイトの設定」で
             カメラの設定を確認することもできます。
+
           </p>
 
         </div>
@@ -859,16 +1247,24 @@
             カメラの許可について
           </h3>
 
-          <p>
-            お使いのブラウザや端末によって、
-            カメラの許可方法が異なる場合があります。
-          </p>
 
           <p>
-            FormCheckerはカメラの使用許可を確認してから撮影を開始します。
+
+            お使いのブラウザや端末によって、
+            カメラの許可方法が異なる場合があります。
+
+          </p>
+
+
+          <p>
+
+            FormCheckerはカメラの使用許可を
+            確認してから撮影を開始します。
+
           </p>
 
         </div>
+
 
       </div>
 
@@ -884,6 +1280,40 @@
   <div class="video-container">
 
 
+    <!-- =======================================================
+         ★ カメラ診断モード
+         
+         左上に表示。
+         カメラ起動後、自動的に情報が更新される。
+         ======================================================= -->
+
+    <div
+      id="cameraDiagnostic"
+      class="camera-diagnostic">
+
+
+      <div class="diagnostic-title">
+
+        CAMERA DIAGNOSTIC
+
+      </div>
+
+
+      <div id="diagnosticContent">
+
+        <span class="diagnostic-unavailable">
+          カメラ未起動
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- =======================================================
+         Webカメラ
+         ======================================================= -->
+
     <video
       id="webcam"
       autoplay
@@ -891,6 +1321,10 @@
       muted>
     </video>
 
+
+    <!-- =======================================================
+         再生用動画
+         ======================================================= -->
 
     <video
       id="playback"
@@ -901,6 +1335,10 @@
     </video>
 
 
+    <!-- =======================================================
+         モーション検知用Canvas
+         ======================================================= -->
+
     <canvas
       id="motionCanvas"
       style="display:none;">
@@ -908,47 +1346,13 @@
 
 
     <!-- =======================================================
-         ★ 実fps表示
-
-         左上に表示する。
-
-         FPSは実際にvideoへ到着したフレームを
-         requestVideoFrameCallback()で数えて計算する。
-         ======================================================= -->
-
-    <div
-      id="fpsIndicator"
-      class="fps-indicator">
-
-      FPS:
-      <span
-        id="fpsValue"
-        class="fps-value">
-
-        ---
-
-      </span>
-
-      <br>
-
-      <span
-        id="fpsInfo"
-        class="fps-info">
-
-        カメラ待機中
-
-      </span>
-
-    </div>
-
-
-    <!-- =======================================================
-         録画表示
+         REC表示
          ======================================================= -->
 
     <div
       id="recIndicator"
       class="rec-indicator">
+
 
       <div class="rec-dot"></div>
 
@@ -958,7 +1362,7 @@
 
 
     <!-- =======================================================
-         モーション検知
+         モーション検知表示
          ======================================================= -->
 
     <div
@@ -992,10 +1396,12 @@
       id="progressBarContainer"
       class="progress-bar-container">
 
+
       <div
         id="progressBar"
         class="progress-bar">
       </div>
+
 
     </div>
 
@@ -1015,6 +1421,7 @@
 
     <div class="setting-row">
 
+
       <span class="setting-label">
 
         録画時間
@@ -1023,6 +1430,7 @@
 
 
       <div class="stepper">
+
 
         <button
           class="btn-step"
@@ -1050,6 +1458,7 @@
 
         </button>
 
+
       </div>
 
     </div>
@@ -1059,6 +1468,7 @@
 
     <div class="setting-row">
 
+
       <span class="setting-label">
 
         移動待機時間
@@ -1067,6 +1477,7 @@
 
 
       <div class="stepper">
+
 
         <button
           class="btn-step"
@@ -1094,6 +1505,7 @@
 
         </button>
 
+
       </div>
 
     </div>
@@ -1103,6 +1515,7 @@
 
     <div class="setting-row">
 
+
       <span class="setting-label">
 
         再生速度
@@ -1111,6 +1524,7 @@
 
 
       <div class="stepper">
+
 
         <button
           class="btn-step"
@@ -1138,6 +1552,7 @@
 
         </button>
 
+
       </div>
 
     </div>
@@ -1147,6 +1562,7 @@
 
     <div class="setting-row">
 
+
       <span class="setting-label">
 
         検知レベル
@@ -1155,6 +1571,7 @@
 
 
       <div class="stepper">
+
 
         <button
           class="btn-step"
@@ -1182,9 +1599,11 @@
 
         </button>
 
+
       </div>
 
     </div>
+
 
   </div>
 
@@ -1201,6 +1620,7 @@
        ========================================================= */
 
     let recordDuration =
+
       parseFloat(
         localStorage.getItem(
           'formchecker_rec'
@@ -1209,6 +1629,7 @@
 
 
     let moveDelay =
+
       parseFloat(
         localStorage.getItem(
           'formchecker_move'
@@ -1217,6 +1638,7 @@
 
 
     let speedIndex =
+
       parseInt(
         localStorage.getItem(
           'formchecker_speedIndex'
@@ -1228,11 +1650,11 @@
     if (isNaN(speedIndex)) {
 
       speedIndex = 1;
-
     }
 
 
     let motionLevel =
+
       parseInt(
         localStorage.getItem(
           'formchecker_sensitivity'
@@ -1244,15 +1666,16 @@
     if (isNaN(motionLevel)) {
 
       motionLevel = 50;
-
     }
 
 
     const speedOptions = [
+
       0.15,
       0.25,
       0.5,
       1.0
+
     ];
 
 
@@ -1428,18 +1851,18 @@
 
 
     /* =========================================================
-       ★ FPS測定用DOM
+       ★ カメラ診断用DOM
        ========================================================= */
 
-    const fpsValue =
+    const cameraDiagnostic =
       document.getElementById(
-        'fpsValue'
+        'cameraDiagnostic'
       );
 
 
-    const fpsInfo =
+    const diagnosticContent =
       document.getElementById(
-        'fpsInfo'
+        'diagnosticContent'
       );
 
 
@@ -1453,36 +1876,32 @@
 
     let recordedChunks = [];
 
-
     let prevFrameData = null;
 
     let ignoreMotionUntil = 0;
-
 
     let recordedBlobUrl = null;
 
 
     /* =========================================================
-       ★ 実fps測定用変数
-       =========================================================
-
-       requestVideoFrameCallback() が呼ばれるたびに
-       frameCount を1増やす。
-
-       約1秒経過したところで、
-
-       フレーム数 ÷ 経過時間
-
-       を計算する。
-
-       これによって「実際に届いたfps」を測定する。
+       ★ 実測FPS計測用
+       
+       requestVideoFrameCallback が使えるブラウザでは
+       「実際に動画フレームが表示された回数」を測る。
+       
+       これが使えないブラウザでは、
+       requestAnimationFrameによる近似値を使用する。
        ========================================================= */
+
+    let measuredFPS = 0;
 
     let fpsFrameCount = 0;
 
-    let fpsStartTime = null;
+    let fpsStartTime = 0;
 
-    let fpsCallbackId = null;
+    let fpsFrameRequestId = null;
+
+    let fpsMeasurementRunning = false;
 
 
     /* =========================================================
@@ -1492,6 +1911,7 @@
     function detectDevice() {
 
       const ua =
+
         navigator.userAgent ||
         navigator.vendor ||
         window.opera ||
@@ -1503,9 +1923,13 @@
 
 
       const isIOS =
+
         /iPhone|iPad|iPod/i.test(ua) ||
+
         (
-          navigator.platform === 'MacIntel' &&
+          navigator.platform ===
+          'MacIntel' &&
+
           navigator.maxTouchPoints > 1
         );
 
@@ -1513,19 +1937,16 @@
       if (isAndroid) {
 
         return 'android';
-
       }
 
 
       if (isIOS) {
 
         return 'iphone';
-
       }
 
 
       return 'other';
-
     }
 
 
@@ -1575,22 +1996,24 @@
 
 
       androidHelp.style.display =
+
         device === 'android'
           ? 'block'
           : 'none';
 
 
       iphoneHelp.style.display =
+
         device === 'iphone'
           ? 'block'
           : 'none';
 
 
       otherHelp.style.display =
+
         device === 'other'
           ? 'block'
           : 'none';
-
     }
 
 
@@ -1615,7 +2038,6 @@
 
       mainBtn.className =
         'btn-top-action btn-reset';
-
     }
 
 
@@ -1626,6 +2048,7 @@
     function toggleCameraHelp() {
 
       const isShown =
+
         cameraHelpDetails.classList.contains(
           'show'
         );
@@ -1652,9 +2075,7 @@
 
         helpToggleBtn.innerText =
           '使用方法を閉じる';
-
       }
-
     }
 
 
@@ -1670,247 +2091,15 @@
 
 
       return maxThresh -
+
         (
           motionLevel / 100
         ) *
+
         (
-          maxThresh - minThresh
+          maxThresh -
+          minThresh
         );
-
-    }
-
-
-    /* =========================================================
-       ★ 実fps測定開始
-       =========================================================
-
-       カメラ映像がvideo要素に入ってきたとき、
-       requestVideoFrameCallback() が呼ばれる。
-
-       これを利用して実際のフレーム数を測定する。
-
-       注意：
-       「60fpsを要求した」ではなく、
-       「実際に何フレーム届いたか」を測る。
-       ========================================================= */
-
-    function startFPSMeasurement() {
-
-      /*
-       * 古い測定を停止。
-       */
-      stopFPSMeasurement();
-
-
-      /*
-       * ブラウザが
-       * requestVideoFrameCallback()
-       * に対応しているか確認。
-       */
-
-      if (
-        typeof webcam.requestVideoFrameCallback !==
-        'function'
-      ) {
-
-        fpsValue.innerText =
-          '測定不可';
-
-        fpsInfo.innerText =
-          'ブラウザ非対応';
-
-        return;
-
-      }
-
-
-      /*
-       * カウンターを初期化。
-       */
-
-      fpsFrameCount = 0;
-
-      fpsStartTime = null;
-
-
-      /*
-       * 1フレームごとに呼ばれる関数。
-       */
-
-      function countFrame(
-        now,
-        metadata
-      ) {
-
-        /*
-         * 最初のフレームで測定開始時刻を記録。
-         */
-
-        if (fpsStartTime === null) {
-
-          fpsStartTime = now;
-
-        }
-
-
-        fpsFrameCount++;
-
-
-        /*
-         * 測定開始からの経過時間。
-         */
-
-        const elapsed =
-          now - fpsStartTime;
-
-
-        /*
-         * 約1秒ごとにfpsを計算。
-         */
-
-        if (elapsed >= 1000) {
-
-          const fps =
-            fpsFrameCount /
-            (elapsed / 1000);
-
-
-          /*
-           * 小数1桁で表示。
-           */
-
-          fpsValue.innerText =
-            fps.toFixed(1);
-
-
-          /*
-           * カメラの実際の設定値も取得。
-           */
-
-          if (mediaStream) {
-
-            const tracks =
-              mediaStream.getVideoTracks();
-
-
-            if (
-              tracks.length > 0
-            ) {
-
-              const settings =
-                tracks[0].getSettings();
-
-
-              let info = '';
-
-
-              if (
-                settings.width &&
-                settings.height
-              ) {
-
-                info =
-                  settings.width +
-                  '×' +
-                  settings.height;
-
-              }
-
-
-              /*
-               * getSettings() のframeRateは
-               * 「実測値」ではなく、
-               * カメラトラックの設定値。
-               *
-               * そのため、ここでは
-               * 実測fpsとは別に扱う。
-               */
-
-              if (
-                settings.frameRate
-              ) {
-
-                info +=
-                  ' / 設定 ' +
-                  settings.frameRate.toFixed(1) +
-                  'fps';
-
-              }
-
-
-              fpsInfo.innerText =
-                info;
-
-            }
-
-          }
-
-
-          /*
-           * 次の約1秒の測定へ。
-           */
-
-          fpsFrameCount = 0;
-
-          fpsStartTime = now;
-
-        }
-
-
-        /*
-         * 次のフレームを測定。
-         */
-
-        fpsCallbackId =
-          webcam.requestVideoFrameCallback(
-            countFrame
-          );
-
-      }
-
-
-      /*
-       * 最初の測定を開始。
-       */
-
-      fpsCallbackId =
-        webcam.requestVideoFrameCallback(
-          countFrame
-        );
-
-    }
-
-
-    /* =========================================================
-       ★ 実fps測定停止
-       ========================================================= */
-
-    function stopFPSMeasurement() {
-
-      /*
-       * requestVideoFrameCallback() は
-       * cancelVideoFrameCallback() で停止できる。
-       */
-
-      if (
-        fpsCallbackId !== null &&
-        typeof webcam.cancelVideoFrameCallback ===
-        'function'
-      ) {
-
-        webcam.cancelVideoFrameCallback(
-          fpsCallbackId
-        );
-
-      }
-
-
-      fpsCallbackId = null;
-
-      fpsFrameCount = 0;
-
-      fpsStartTime = null;
-
     }
 
 
@@ -1919,12 +2108,16 @@
        ========================================================= */
 
     window.addEventListener(
+
       'DOMContentLoaded',
+
       () => {
+
 
         document.getElementById(
           'recVal'
         ).innerText =
+
           recordDuration.toFixed(1) +
           ' 秒';
 
@@ -1932,6 +2125,7 @@
         document.getElementById(
           'moveVal'
         ).innerText =
+
           moveDelay.toFixed(1) +
           ' 秒';
 
@@ -1939,6 +2133,7 @@
         document.getElementById(
           'speedVal'
         ).innerText =
+
           speedOptions[speedIndex] +
           'x';
 
@@ -1946,9 +2141,12 @@
         document.getElementById(
           'sensitivityVal'
         ).innerText =
+
           motionLevel;
 
+
       }
+
     );
 
 
@@ -1961,66 +2159,97 @@
       delta
     ) {
 
+
       if (type === 'rec') {
 
+
         recordDuration =
+
           Math.max(
+
             0.5,
+
             Math.min(
+
               5.0,
+
               parseFloat(
+
                 (
                   recordDuration +
                   delta
                 ).toFixed(1)
+
               )
+
             )
+
           );
 
 
         document.getElementById(
           'recVal'
         ).innerText =
+
           recordDuration.toFixed(1) +
           ' 秒';
 
 
         localStorage.setItem(
+
           'formchecker_rec',
+
           recordDuration
+
         );
+
 
       }
 
 
       else if (type === 'move') {
 
+
         moveDelay =
+
           Math.max(
+
             0.5,
+
             Math.min(
+
               10.0,
+
               parseFloat(
+
                 (
                   moveDelay +
                   delta
                 ).toFixed(1)
+
               )
+
             )
+
           );
 
 
         document.getElementById(
           'moveVal'
         ).innerText =
+
           moveDelay.toFixed(1) +
           ' 秒';
 
 
         localStorage.setItem(
+
           'formchecker_move',
+
           moveDelay
+
         );
+
 
       }
 
@@ -2029,14 +2258,22 @@
         type === 'sensitivity'
       ) {
 
+
         motionLevel =
+
           Math.max(
+
             0,
+
             Math.min(
+
               100,
+
               motionLevel +
               delta
+
             )
+
           );
 
 
@@ -2047,8 +2284,11 @@
 
 
         localStorage.setItem(
+
           'formchecker_sensitivity',
+
           motionLevel
+
         );
 
       }
@@ -2062,18 +2302,22 @@
 
     function toggleSpeed(dir) {
 
+
       speedIndex =
+
         (
           speedIndex +
           dir +
           speedOptions.length
         ) %
+
         speedOptions.length;
 
 
       document.getElementById(
         'speedVal'
       ).innerText =
+
         speedOptions[speedIndex] +
         'x';
 
@@ -2085,13 +2329,15 @@
 
         playback.playbackRate =
           speedOptions[speedIndex];
-
       }
 
 
       localStorage.setItem(
+
         'formchecker_speedIndex',
+
         speedIndex
+
       );
 
     }
@@ -2106,10 +2352,16 @@
       lang = 'en-US'
     ) {
 
+
       if (
+
         text &&
-        'speechSynthesis' in window
+
+        'speechSynthesis' in
+        window
+
       ) {
+
 
         window.speechSynthesis.cancel();
 
@@ -2134,15 +2386,1091 @@
 
 
     /* =========================================================
+       ★ 診断表示用：値を安全に文字列化
+       ========================================================= */
+
+    function diagnosticValue(
+      value
+    ) {
+
+
+      if (
+        value === undefined ||
+        value === null
+      ) {
+
+        return `
+          <span class="diagnostic-unavailable">
+            取得不可
+          </span>
+        `;
+      }
+
+
+      if (
+        typeof value === 'number'
+      ) {
+
+
+        if (
+          !Number.isFinite(value)
+        ) {
+
+          return `
+            <span class="diagnostic-unavailable">
+              取得不可
+            </span>
+          `;
+        }
+
+
+        return Number.isInteger(value)
+
+          ? String(value)
+
+          : value.toFixed(4);
+      }
+
+
+      if (
+        typeof value === 'boolean'
+      ) {
+
+        return value
+          ? 'ON'
+          : 'OFF';
+      }
+
+
+      if (
+        typeof value === 'string'
+      ) {
+
+        return value || '-';
+      }
+
+
+      if (
+        Array.isArray(value)
+      ) {
+
+        return value.length
+          ? value.join(', ')
+          : '[]';
+      }
+
+
+      if (
+        typeof value === 'object'
+      ) {
+
+        try {
+
+          return JSON.stringify(
+            value
+          );
+
+        }
+
+        catch (e) {
+
+          return '[object]';
+        }
+
+      }
+
+
+      return String(value);
+    }
+
+
+    /* =========================================================
+       ★ シャッター速度表示
+       
+       exposureTime は「秒」で返される場合がある。
+       
+       例：
+       0.033333
+       ↓
+       1/30
+       ========================================================= */
+
+    function formatShutter(
+      exposureTime
+    ) {
+
+
+      if (
+
+        typeof exposureTime !==
+        'number' ||
+
+        !Number.isFinite(
+          exposureTime
+        ) ||
+
+        exposureTime <= 0
+
+      ) {
+
+        return null;
+      }
+
+
+      const shutter =
+        1 / exposureTime;
+
+
+      if (
+        shutter >= 1
+      ) {
+
+        return shutter.toFixed(2) +
+          '秒';
+      }
+
+
+      return '1/' +
+        Math.round(shutter);
+    }
+
+
+    /* =========================================================
+       ★ 実測FPS
+       
+       requestVideoFrameCallback版
+       ========================================================= */
+
+    function startRealFPSMeasurement() {
+
+
+      stopRealFPSMeasurement();
+
+
+      measuredFPS = 0;
+
+      fpsFrameCount = 0;
+
+      fpsStartTime =
+        performance.now();
+
+
+      fpsMeasurementRunning =
+        true;
+
+
+      if (
+        'requestVideoFrameCallback'
+        in HTMLVideoElement.prototype
+      ) {
+
+
+        function countVideoFrame(
+          now,
+          metadata
+        ) {
+
+
+          if (
+            !fpsMeasurementRunning
+          ) {
+
+            return;
+          }
+
+
+          fpsFrameCount++;
+
+
+          const elapsed =
+            now -
+            fpsStartTime;
+
+
+          if (
+            elapsed >= 1000
+          ) {
+
+
+            measuredFPS =
+
+              (
+                fpsFrameCount /
+                elapsed
+              ) *
+              1000;
+
+
+            fpsFrameCount = 0;
+
+            fpsStartTime = now;
+          }
+
+
+          fpsFrameRequestId =
+            webcam.requestVideoFrameCallback(
+              countVideoFrame
+            );
+        }
+
+
+        fpsFrameRequestId =
+          webcam.requestVideoFrameCallback(
+            countVideoFrame
+          );
+
+
+      }
+
+      else {
+
+
+        /*
+         * 古いブラウザ用の予備処理。
+         *
+         * requestVideoFrameCallbackがない場合は
+         * requestAnimationFrameで近似する。
+         */
+
+        function countAnimationFrame(
+          now
+        ) {
+
+
+          if (
+            !fpsMeasurementRunning
+          ) {
+
+            return;
+          }
+
+
+          fpsFrameCount++;
+
+
+          const elapsed =
+            now -
+            fpsStartTime;
+
+
+          if (
+            elapsed >= 1000
+          ) {
+
+
+            measuredFPS =
+
+              (
+                fpsFrameCount /
+                elapsed
+              ) *
+              1000;
+
+
+            fpsFrameCount = 0;
+
+            fpsStartTime = now;
+          }
+
+
+          fpsFrameRequestId =
+            requestAnimationFrame(
+              countAnimationFrame
+            );
+        }
+
+
+        fpsFrameRequestId =
+          requestAnimationFrame(
+            countAnimationFrame
+          );
+      }
+    }
+
+
+    /* =========================================================
+       ★ 実測FPS停止
+       ========================================================= */
+
+    function stopRealFPSMeasurement() {
+
+
+      fpsMeasurementRunning =
+        false;
+
+
+      if (
+        fpsFrameRequestId !== null
+      ) {
+
+
+        if (
+
+          'requestVideoFrameCallback'
+          in HTMLVideoElement.prototype
+
+        ) {
+
+
+          try {
+
+            webcam.cancelVideoFrameCallback(
+              fpsFrameRequestId
+            );
+
+          }
+
+          catch (e) {}
+
+        }
+
+        else {
+
+          cancelAnimationFrame(
+            fpsFrameRequestId
+          );
+        }
+
+
+        fpsFrameRequestId =
+          null;
+      }
+    }
+
+
+    /* =========================================================
+       ★ 診断情報
+       
+       getSettings()
+       getCapabilities()
+       getConstraints()
+       
+       の3種類を調べる。
+       ========================================================= */
+
+    let diagnosticTimer = null;
+
+
+    /* =========================================================
+       診断情報：オブジェクト全部表示
+       ========================================================= */
+
+    function diagnosticObjectHTML(
+      obj
+    ) {
+
+
+      if (
+        !obj
+      ) {
+
+        return `
+          <span class="diagnostic-unavailable">
+            取得不可
+          </span>
+        `;
+      }
+
+
+      const keys =
+        Object.keys(obj);
+
+
+      if (
+        keys.length === 0
+      ) {
+
+        return `
+          <span class="diagnostic-unavailable">
+            情報なし
+          </span>
+        `;
+      }
+
+
+      let html = '';
+
+
+      keys.forEach(
+        key => {
+
+
+          html +=
+
+            key +
+            ': ' +
+            diagnosticValue(
+              obj[key]
+            ) +
+            '<br>';
+
+        }
+      );
+
+
+      return html;
+    }
+
+
+    /* =========================================================
+       ★ 診断情報更新
+       ========================================================= */
+
+    function updateCameraDiagnostic() {
+
+
+      if (
+        !mediaStream
+      ) {
+
+
+        diagnosticContent.innerHTML =
+
+          '<span class="diagnostic-unavailable">' +
+          'カメラ未起動' +
+          '</span>';
+
+
+        return;
+      }
+
+
+      const tracks =
+        mediaStream.getVideoTracks();
+
+
+      if (
+        !tracks ||
+        tracks.length === 0
+      ) {
+
+
+        diagnosticContent.innerHTML =
+
+          '<span class="diagnostic-warning">' +
+          '映像トラックなし' +
+          '</span>';
+
+
+        return;
+      }
+
+
+      const track =
+        tracks[0];
+
+
+      /* =======================================================
+         現在の設定
+         ======================================================= */
+
+      let settings = {};
+
+
+      try {
+
+        settings =
+          track.getSettings();
+
+      }
+
+      catch (e) {
+
+        settings = {};
+      }
+
+
+      /* =======================================================
+         カメラが対応できる範囲
+         ======================================================= */
+
+      let capabilities = {};
+
+
+      try {
+
+        capabilities =
+          track.getCapabilities();
+
+      }
+
+      catch (e) {
+
+        capabilities = {};
+      }
+
+
+      /* =======================================================
+         アプリが要求している設定
+         ======================================================= */
+
+      let constraints = {};
+
+
+      try {
+
+        constraints =
+          track.getConstraints();
+
+      }
+
+      catch (e) {
+
+        constraints = {};
+      }
+
+
+      let html = '';
+
+
+      /* =======================================================
+         現在のカメラ
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【現在のカメラ】' +
+        '</div>';
+
+
+      html +=
+
+        '実測FPS: ' +
+
+        '<span class="diagnostic-important">' +
+
+        (
+          measuredFPS > 0
+            ? measuredFPS.toFixed(1)
+            : '-'
+        ) +
+
+        ' fps</span><br>';
+
+
+      html +=
+
+        '設定FPS: ' +
+
+        diagnosticValue(
+          settings.frameRate
+        ) +
+
+        ' fps<br>';
+
+
+      html +=
+
+        '解像度: ' +
+
+        diagnosticValue(
+          settings.width
+        ) +
+
+        ' × ' +
+
+        diagnosticValue(
+          settings.height
+        ) +
+
+        '<br>';
+
+
+      html +=
+
+        'カメラ方向: ' +
+
+        diagnosticValue(
+          settings.facingMode
+        ) +
+
+        '<br>';
+
+
+      /* =======================================================
+         露出
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【露出】' +
+        '</div>';
+
+
+      const shutter =
+        formatShutter(
+          settings.exposureTime
+        );
+
+
+      if (shutter) {
+
+
+        html +=
+
+          'シャッター: ' +
+
+          '<span class="diagnostic-important">' +
+
+          shutter +
+
+          '</span><br>';
+
+
+        html +=
+
+          '露光時間: ' +
+
+          diagnosticValue(
+            settings.exposureTime
+          ) +
+
+          ' 秒<br>';
+
+      }
+
+      else {
+
+
+        html +=
+
+          '<span class="diagnostic-unavailable">' +
+          'シャッター: 取得不可' +
+          '</span><br>';
+      }
+
+
+      if (
+        typeof settings.iso ===
+        'number'
+      ) {
+
+
+        html +=
+
+          'ISO: ' +
+
+          '<span class="diagnostic-important">' +
+
+          settings.iso +
+
+          '</span><br>';
+
+      }
+
+      else {
+
+
+        html +=
+
+          '<span class="diagnostic-unavailable">' +
+          'ISO: 取得不可' +
+          '</span><br>';
+      }
+
+
+      if (
+        settings.exposureMode !==
+        undefined
+      ) {
+
+
+        html +=
+
+          '露出モード: ' +
+
+          diagnosticValue(
+            settings.exposureMode
+          ) +
+
+          '<br>';
+      }
+
+
+      if (
+        settings.exposureCompensation !==
+        undefined
+      ) {
+
+
+        html +=
+
+          '露出補正: ' +
+
+          diagnosticValue(
+            settings.exposureCompensation
+          ) +
+
+          '<br>';
+      }
+
+
+      /* =======================================================
+         フォーカス
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【フォーカス】' +
+        '</div>';
+
+
+      html +=
+
+        'フォーカスモード: ' +
+
+        diagnosticValue(
+          settings.focusMode
+        ) +
+
+        '<br>';
+
+
+      html +=
+
+        'フォーカス距離: ' +
+
+        diagnosticValue(
+          settings.focusDistance
+        ) +
+
+        '<br>';
+
+
+      /* =======================================================
+         ホワイトバランス
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【ホワイトバランス】' +
+        '</div>';
+
+
+      html +=
+
+        'WBモード: ' +
+
+        diagnosticValue(
+          settings.whiteBalanceMode
+        ) +
+
+        '<br>';
+
+
+      html +=
+
+        '色温度: ' +
+
+        diagnosticValue(
+          settings.colorTemperature
+        ) +
+
+        '<br>';
+
+
+      /* =======================================================
+         その他の現在値
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【その他】' +
+        '</div>';
+
+
+      html +=
+
+        'ズーム: ' +
+
+        diagnosticValue(
+          settings.zoom
+        ) +
+
+        '<br>';
+
+
+      html +=
+
+        'Torch: ' +
+
+        diagnosticValue(
+          settings.torch
+        ) +
+
+        '<br>';
+
+
+      /* =======================================================
+         カメラ対応範囲
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【カメラ対応範囲】' +
+        '</div>';
+
+
+      if (
+        capabilities.width
+      ) {
+
+
+        html +=
+
+          '幅: ' +
+
+          diagnosticValue(
+            capabilities.width.min
+          ) +
+
+          ' ～ ' +
+
+          diagnosticValue(
+            capabilities.width.max
+          ) +
+
+          '<br>';
+      }
+
+
+      if (
+        capabilities.height
+      ) {
+
+
+        html +=
+
+          '高さ: ' +
+
+          diagnosticValue(
+            capabilities.height.min
+          ) +
+
+          ' ～ ' +
+
+          diagnosticValue(
+            capabilities.height.max
+          ) +
+
+          '<br>';
+      }
+
+
+      if (
+        capabilities.frameRate
+      ) {
+
+
+        html +=
+
+          'FPS: ' +
+
+          diagnosticValue(
+            capabilities.frameRate.min
+          ) +
+
+          ' ～ ' +
+
+          diagnosticValue(
+            capabilities.frameRate.max
+          ) +
+
+          '<br>';
+      }
+
+
+      if (
+        capabilities.iso
+      ) {
+
+
+        html +=
+
+          'ISO: ' +
+
+          diagnosticValue(
+            capabilities.iso.min
+          ) +
+
+          ' ～ ' +
+
+          diagnosticValue(
+            capabilities.iso.max
+          ) +
+
+          '<br>';
+      }
+
+
+      if (
+        capabilities.exposureTime
+      ) {
+
+
+        html +=
+
+          '露光時間: ' +
+
+          diagnosticValue(
+            capabilities.exposureTime.min
+          ) +
+
+          ' ～ ' +
+
+          diagnosticValue(
+            capabilities.exposureTime.max
+          ) +
+
+          ' 秒<br>';
+      }
+
+
+      if (
+        capabilities.zoom
+      ) {
+
+
+        html +=
+
+          'ズーム: ' +
+
+          diagnosticValue(
+            capabilities.zoom.min
+          ) +
+
+          ' ～ ' +
+
+          diagnosticValue(
+            capabilities.zoom.max
+          ) +
+
+          '<br>';
+      }
+
+
+      /* =======================================================
+         アプリからの要求
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【アプリからの要求】' +
+        '</div>';
+
+
+      html +=
+        diagnosticObjectHTML(
+          constraints
+        );
+
+
+      /* =======================================================
+         getSettings() の全項目
+         
+         ★ここが今回の「全部調べる」の重要部分。
+         
+         ブラウザが将来新しい項目を返しても、
+         ここには自動的に表示される。
+         ======================================================= */
+
+      html +=
+
+        '<div class="diagnostic-section">' +
+        '【現在取得できた全項目】' +
+        '</div>';
+
+
+      html +=
+        diagnosticObjectHTML(
+          settings
+        );
+
+
+      diagnosticContent.innerHTML =
+        html;
+    }
+
+
+    /* =========================================================
+       ★ 診断開始
+       ========================================================= */
+
+    function startCameraDiagnostic() {
+
+
+      stopCameraDiagnostic();
+
+
+      updateCameraDiagnostic();
+
+
+      /*
+       * 500msごとに更新。
+       *
+       * これにより、暗い場所へ移動したときなどに
+       *
+       * ISO
+       * シャッター
+       * FPS
+       *
+       * などが変化する場合、その変化を観察できる。
+       */
+
+      diagnosticTimer =
+
+        setInterval(
+
+          updateCameraDiagnostic,
+
+          500
+
+        );
+    }
+
+
+    /* =========================================================
+       ★ 診断停止
+       ========================================================= */
+
+    function stopCameraDiagnostic() {
+
+
+      if (
+        diagnosticTimer
+      ) {
+
+
+        clearInterval(
+          diagnosticTimer
+        );
+
+
+        diagnosticTimer =
+          null;
+      }
+    }
+
+
+    /* =========================================================
        メインボタン
        ========================================================= */
 
     function handleMainButtonClick() {
 
+
       if (
         currentState ===
         STATE.INIT
       ) {
+
 
         initCamera();
 
@@ -2150,10 +3478,9 @@
 
       else {
 
+
         resetToStandby();
-
       }
-
     }
 
 
@@ -2164,7 +3491,6 @@
     function retryCameraPermission() {
 
       initCamera();
-
     }
 
 
@@ -2174,10 +3500,16 @@
 
     async function initCamera() {
 
+
       if (
+
         !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia
+
+        !navigator.mediaDevices
+          .getUserMedia
+
       ) {
+
 
         showCameraHelp();
 
@@ -2185,49 +3517,56 @@
         document.getElementById(
           'cameraHelpMessage'
         ).innerText =
+
           'このブラウザではカメラを利用できません。ChromeまたはSafariなど、カメラに対応したブラウザでお試しください。';
 
 
         return;
-
       }
 
 
       try {
 
-        /*
-         * 1920×1080 / 60fps は
-         * 「理想値」として要求する。
-         *
-         * 実際のfpsは端末・カメラ・明るさなどによって
-         * 変わる可能性がある。
-         */
+
+        /* =====================================================
+           カメラ要求
+           
+           1920×1080 / 60fpsを理想値として要求。
+           ===================================================== */
 
         mediaStream =
-          await navigator.mediaDevices.getUserMedia({
 
-            video: {
+          await navigator.mediaDevices
+            .getUserMedia({
 
-              facingMode:
-                'environment',
+              video: {
 
-              width: {
-                ideal: 1920
+                facingMode:
+                  'environment',
+
+                width: {
+
+                  ideal: 1920
+
+                },
+
+                height: {
+
+                  ideal: 1080
+
+                },
+
+                frameRate: {
+
+                  ideal: 60
+
+                }
+
               },
 
-              height: {
-                ideal: 1080
-              },
+              audio: false
 
-              frameRate: {
-                ideal: 60
-              }
-
-            },
-
-            audio: false
-
-          });
+            });
 
 
         webcam.srcObject =
@@ -2237,12 +3576,16 @@
         await webcam.play();
 
 
-        /*
-         * モーション検知用キャンバス。
-         *
-         * カメラ映像そのものは1920×1080等で取得し、
-         * モーション検知だけ160×120に縮小して処理する。
-         */
+        /* =====================================================
+           ★ 実測FPS測定開始
+           ===================================================== */
+
+        startRealFPSMeasurement();
+
+
+        /* =====================================================
+           モーション検知用Canvas
+           ===================================================== */
 
         motionCanvas.width =
           160;
@@ -2251,9 +3594,12 @@
           120;
 
 
-        /*
-         * カメラ起動成功。
-         */
+        /* =====================================================
+           ★ カメラ診断開始
+           ===================================================== */
+
+        startCameraDiagnostic();
+
 
         hideCameraHelp();
 
@@ -2282,22 +3628,6 @@
           '端末を固定してご利用ください';
 
 
-        /*
-         * ★ カメラ起動直後から
-         * 実fps測定を開始。
-         */
-
-        fpsValue.innerText =
-          '測定中';
-
-
-        fpsInfo.innerText =
-          '実フレーム測定中';
-
-
-        startFPSMeasurement();
-
-
         setStandbyState();
 
       }
@@ -2305,32 +3635,38 @@
 
       catch (err) {
 
+
         console.log(
+
           'Camera error:',
+
           err.name,
+
           err.message
+
         );
 
 
-        /*
-         * エラー時はfps測定も停止。
-         */
+        stopRealFPSMeasurement();
 
-        stopFPSMeasurement();
+        stopCameraDiagnostic();
 
 
         if (mediaStream) {
 
+
           mediaStream
             .getTracks()
             .forEach(
+
               track =>
                 track.stop()
+
             );
 
 
-          mediaStream = null;
-
+          mediaStream =
+            null;
         }
 
 
@@ -2342,52 +3678,70 @@
 
 
         const message =
+
           document.getElementById(
             'cameraHelpMessage'
           );
 
 
         if (
+
           err.name ===
             'NotAllowedError' ||
+
           err.name ===
             'PermissionDeniedError'
+
         ) {
 
+
           message.innerText =
+
             'カメラの使用が許可されていません。上のボタンを押して、カメラの使用を許可してください。';
 
         }
 
 
         else if (
+
           err.name ===
           'NotFoundError'
+
         ) {
 
+
           message.innerText =
+
             'カメラが見つかりませんでした。カメラが利用できる端末・ブラウザでお試しください。';
 
         }
 
 
         else if (
+
           err.name ===
           'NotReadableError'
+
         ) {
 
+
           message.innerText =
+
             'カメラを使用できませんでした。他のアプリがカメラを使用していないか確認してください。';
 
         }
 
 
         else if (
+
           err.name ===
           'SecurityError'
+
         ) {
 
+
           message.innerText =
+
             'ブラウザのセキュリティ設定によりカメラを使用できませんでした。使用方法をご確認ください。';
 
         }
@@ -2395,13 +3749,13 @@
 
         else {
 
-          message.innerText =
-            'カメラの使用を開始できませんでした。カメラの許可を確認して、もう一度お試しください。';
 
+          message.innerText =
+
+            'カメラの使用を開始できませんでした。カメラの許可を確認して、もう一度お試しください。';
         }
 
       }
-
     }
 
 
@@ -2410,6 +3764,7 @@
        ========================================================= */
 
     function resetProgressBar() {
+
 
       progressBar.style.transitionDuration =
         '0s';
@@ -2426,7 +3781,6 @@
 
       progressBarContainer.style.display =
         'none';
-
     }
 
 
@@ -2436,58 +3790,79 @@
 
     function clearAllTimers() {
 
-      if (readyTimeoutTimer) {
+
+      if (
+        readyTimeoutTimer
+      ) {
+
 
         clearTimeout(
           readyTimeoutTimer
         );
 
-        readyTimeoutTimer = null;
 
+        readyTimeoutTimer =
+          null;
       }
 
 
-      if (countdownInterval) {
+      if (
+        countdownInterval
+      ) {
+
 
         clearInterval(
           countdownInterval
         );
 
-        countdownInterval = null;
 
+        countdownInterval =
+          null;
       }
 
 
-      if (recTimeoutTimer) {
+      if (
+        recTimeoutTimer
+      ) {
+
 
         clearTimeout(
           recTimeoutTimer
         );
 
-        recTimeoutTimer = null;
 
+        recTimeoutTimer =
+          null;
       }
 
 
-      if (recAnimTimer) {
+      if (
+        recAnimTimer
+      ) {
+
 
         clearTimeout(
           recAnimTimer
         );
 
-        recAnimTimer = null;
 
+        recAnimTimer =
+          null;
       }
 
 
-      if (moveIntervalTimer) {
+      if (
+        moveIntervalTimer
+      ) {
+
 
         clearInterval(
           moveIntervalTimer
         );
 
-        moveIntervalTimer = null;
 
+        moveIntervalTimer =
+          null;
       }
 
     }
@@ -2499,9 +3874,11 @@
 
     function stopMotionDetection() {
 
+
       if (
         motionFrameId !== null
       ) {
+
 
         cancelAnimationFrame(
           motionFrameId
@@ -2510,9 +3887,7 @@
 
         motionFrameId =
           null;
-
       }
-
     }
 
 
@@ -2521,6 +3896,7 @@
        ========================================================= */
 
     function setStandbyState() {
+
 
       currentState =
         STATE.STANDBY;
@@ -2542,6 +3918,7 @@
 
       if (recordedBlobUrl) {
 
+
         URL.revokeObjectURL(
           recordedBlobUrl
         );
@@ -2549,7 +3926,6 @@
 
         recordedBlobUrl =
           null;
-
       }
 
 
@@ -2616,6 +3992,7 @@
 
     function resetToStandby() {
 
+
       clearAllTimers();
 
 
@@ -2624,20 +4001,23 @@
         STATE.RECORDING
       ) {
 
+
         currentState =
           STATE.STANDBY;
-
       }
 
 
       if (
+
         mediaRecorder &&
+
         mediaRecorder.state !==
         'inactive'
+
       ) {
 
-        mediaRecorder.stop();
 
+        mediaRecorder.stop();
       }
 
 
@@ -2652,40 +4032,53 @@
 
     function startMotionDetection() {
 
+
       stopMotionDetection();
 
 
       function checkMotion() {
 
+
         if (
+
           currentState !==
             STATE.STANDBY &&
+
           currentState !==
             STATE.READY &&
+
           currentState !==
             STATE.PLAYBACK
+
         ) {
+
 
           motionFrameId =
             null;
 
 
           return;
-
         }
 
 
         if (
+
           webcam.readyState ===
           webcam.HAVE_ENOUGH_DATA
+
         ) {
 
+
           motionCtx.drawImage(
+
             webcam,
+
             0,
             0,
+
             motionCanvas.width,
             motionCanvas.height
+
           );
 
 
@@ -2701,44 +4094,63 @@
 
 
           const currentFrame =
+
             motionCtx.getImageData(
+
               roiX,
               roiY,
               roiW,
               roiH
+
             );
 
 
           if (
+
             prevFrameData &&
+
             Date.now() >
-              ignoreMotionUntil
+            ignoreMotionUntil
+
           ) {
+
 
             let diffCount = 0;
 
 
             for (
+
               let i = 0;
+
               i <
               currentFrame.data.length;
+
               i += 4
+
             ) {
 
+
               const diff =
+
                 Math.abs(
+
                   currentFrame.data[i] -
                   prevFrameData.data[i]
+
                 ) +
 
                 Math.abs(
+
                   currentFrame.data[i + 1] -
                   prevFrameData.data[i + 1]
+
                 ) +
 
                 Math.abs(
+
                   currentFrame.data[i + 2] -
                   prevFrameData.data[i + 2]
+
                 );
 
 
@@ -2747,26 +4159,32 @@
               ) {
 
                 diffCount++;
-
               }
 
             }
 
 
             const motionRatio =
+
               diffCount /
               (roiW * roiH);
 
 
             if (
+
               motionRatio >
               getMotionThreshold()
+
             ) {
 
+
               if (
+
                 currentState ===
                 STATE.STANDBY
+
               ) {
+
 
                 setReadyState();
 
@@ -2776,9 +4194,12 @@
 
 
               else if (
+
                 currentState ===
                 STATE.READY
+
               ) {
+
 
                 startCountdownSequence();
 
@@ -2788,14 +4209,16 @@
 
 
               else if (
+
                 currentState ===
                 STATE.PLAYBACK
+
               ) {
+
 
                 setStandbyState();
 
                 return;
-
               }
 
             }
@@ -2805,23 +4228,22 @@
 
           prevFrameData =
             currentFrame;
-
         }
 
 
         motionFrameId =
+
           requestAnimationFrame(
             checkMotion
           );
-
       }
 
 
       motionFrameId =
+
         requestAnimationFrame(
           checkMotion
         );
-
     }
 
 
@@ -2830,6 +4252,7 @@
        ========================================================= */
 
     function setReadyState() {
+
 
       currentState =
         STATE.READY;
@@ -2875,12 +4298,17 @@
 
 
       readyTimeoutTimer =
+
         setTimeout(
+
           () => {
 
+
             if (
+
               currentState ===
               STATE.READY
+
             ) {
 
               setStandbyState();
@@ -2888,7 +4316,9 @@
             }
 
           },
+
           10000
+
         );
 
 
@@ -2902,6 +4332,7 @@
        ========================================================= */
 
     function startCountdownSequence() {
+
 
       currentState =
         STATE.COUNTDOWN;
@@ -2943,13 +4374,19 @@
 
 
       countdownInterval =
+
         setInterval(
+
           () => {
+
 
             count--;
 
 
-            if (count > 0) {
+            if (
+              count > 0
+            ) {
+
 
               countdownOverlay.innerText =
                 count;
@@ -2959,11 +4396,11 @@
                 count === 2
               ) {
 
+
                 speak(
                   'Two',
                   'en-US'
                 );
-
               }
 
 
@@ -2971,17 +4408,18 @@
                 count === 1
               ) {
 
+
                 speak(
                   'One',
                   'en-US'
                 );
-
               }
 
             }
 
 
             else {
+
 
               clearInterval(
                 countdownInterval
@@ -2998,13 +4436,14 @@
 
 
               startRecording();
-
             }
 
-          },
-          1000
-        );
 
+          },
+
+          1000
+
+        );
     }
 
 
@@ -3014,12 +4453,12 @@
 
     function startRecording() {
 
+
       currentState =
         STATE.RECORDING;
 
 
-      recordedChunks =
-        [];
+      recordedChunks = [];
 
 
       statusText.innerText =
@@ -3046,26 +4485,34 @@
 
 
       recAnimTimer =
+
         setTimeout(
+
           () => {
 
+
             if (
+
               currentState ===
               STATE.RECORDING
+
             ) {
 
+
               progressBar.style.transitionDuration =
+
                 `${recordDuration}s`;
 
 
               progressBar.classList.add(
                 'animate-rec'
               );
-
             }
 
           },
+
           10
+
         );
 
 
@@ -3073,10 +4520,15 @@
 
 
       if (
+
         MediaRecorder.isTypeSupported(
+
           'video/webm;codecs=vp8'
+
         )
+
       ) {
+
 
         options = {
 
@@ -3085,14 +4537,18 @@
 
         };
 
+
       }
 
 
       else if (
+
         MediaRecorder.isTypeSupported(
           'video/mp4'
         )
+
       ) {
+
 
         options = {
 
@@ -3100,50 +4556,63 @@
             'video/mp4'
 
         };
-
       }
 
 
       try {
 
+
         mediaRecorder =
+
           new MediaRecorder(
+
             mediaStream,
+
             options
+
           );
+
 
       }
 
 
       catch (e) {
 
+
         mediaRecorder =
+
           new MediaRecorder(
             mediaStream
           );
-
       }
 
 
       mediaRecorder.ondataavailable =
+
         (e) => {
 
+
           if (
+
             e.data &&
+
             e.data.size > 0
+
           ) {
+
 
             recordedChunks.push(
               e.data
             );
-
           }
 
         };
 
 
       mediaRecorder.onstop =
+
         () => {
+
 
           recIndicator.style.display =
             'none';
@@ -3153,6 +4622,7 @@
 
 
           const wasRecording =
+
             currentState ===
             STATE.RECORDING;
 
@@ -3161,10 +4631,12 @@
             null;
 
 
-          if (wasRecording) {
+          if (
+            wasRecording
+          ) {
+
 
             startMoveDelayPhase();
-
           }
 
         };
@@ -3174,23 +4646,31 @@
 
 
       recTimeoutTimer =
+
         setTimeout(
+
           () => {
 
+
             if (
+
               mediaRecorder &&
+
               mediaRecorder.state ===
               'recording'
+
             ) {
+
 
               mediaRecorder.stop();
 
             }
 
           },
-          recordDuration * 1000
-        );
 
+          recordDuration * 1000
+
+        );
     }
 
 
@@ -3199,6 +4679,7 @@
        ========================================================= */
 
     function startMoveDelayPhase() {
+
 
       currentState =
         STATE.MOVING;
@@ -3220,9 +4701,7 @@
 
 
       countdownOverlay.innerText =
-        Math.ceil(
-          timeLeft
-        );
+        Math.ceil(timeLeft);
 
 
       countdownOverlay.classList.add(
@@ -3231,26 +4710,28 @@
 
 
       moveIntervalTimer =
+
         setInterval(
+
           () => {
 
-            timeLeft -=
-              0.5;
+
+            timeLeft -= 0.5;
 
 
             if (
               timeLeft > 0
             ) {
 
+
               countdownOverlay.innerText =
-                Math.ceil(
-                  timeLeft
-                );
+                Math.ceil(timeLeft);
 
             }
 
 
             else {
+
 
               clearInterval(
                 moveIntervalTimer
@@ -3267,13 +4748,14 @@
 
 
               startPlaybackPhase();
-
             }
 
-          },
-          500
-        );
 
+          },
+
+          500
+
+        );
     }
 
 
@@ -3283,26 +4765,32 @@
 
     function startPlaybackPhase() {
 
+
       currentState =
         STATE.PLAYBACK;
 
 
       const mimeType =
+
         recordedChunks[0]?.type ||
         'video/webm';
 
 
       const blob =
+
         new Blob(
+
           recordedChunks,
+
           {
-            type:
-              mimeType
+            type: mimeType
           }
+
         );
 
 
       recordedBlobUrl =
+
         URL.createObjectURL(
           blob
         );
@@ -3313,6 +4801,7 @@
 
 
       playback.playbackRate =
+
         speedOptions[speedIndex];
 
 
@@ -3336,33 +4825,40 @@
 
 
       playback.ontimeupdate =
+
         () => {
+
 
           if (
             playback.duration
           ) {
 
+
             const progress =
+
               (
                 playback.currentTime /
                 playback.duration
-              ) * 100;
+              ) *
+              100;
 
 
             progressBar.style.width =
-              progress +
-              '%';
-
+              progress + '%';
           }
 
         };
 
 
       playback.play()
+
         .then(
+
           () => {
 
+
             statusText.innerText =
+
               `スロー再生中 (${speedOptions[speedIndex]}x)`;
 
 
@@ -3385,9 +4881,14 @@
             startMotionDetection();
 
           }
+
         )
+
+
         .catch(
+
           err => {
+
 
             console.log(
               'Playback error:',
@@ -3401,10 +4902,9 @@
 
 
             setStandbyState();
-
           }
-        );
 
+        );
     }
 
 
@@ -3413,45 +4913,67 @@
        ========================================================= */
 
     if (
-      'serviceWorker' in navigator
+
+      'serviceWorker' in
+      navigator
+
     ) {
 
+
       window.addEventListener(
+
         'load',
+
         () => {
 
+
           navigator.serviceWorker
+
             .register(
               'service-worker.js'
             )
+
             .then(
+
               registration => {
 
+
                 registration.onupdatefound =
+
                   () => {
 
+
                     const installingWorker =
+
                       registration.installing;
 
 
                     if (
-                      installingWorker !=
-                      null
+                      installingWorker != null
                     ) {
 
+
                       installingWorker.onstatechange =
+
                         () => {
 
+
                           if (
+
                             installingWorker.state ===
                             'installed'
+
                           ) {
 
+
                             if (
+
                               navigator
                                 .serviceWorker
                                 .controller
+
                             ) {
+
 
                               window.location.reload();
 
@@ -3466,24 +4988,36 @@
                   };
 
               }
+
             )
+
             .catch(
+
               err => {
 
+
                 console.log(
+
                   'Service Worker registration failed:',
+
                   err
+
                 );
 
               }
+
             );
 
         }
+
       );
 
     }
 
+
   </script>
 
+
 </body>
+
 </html>
