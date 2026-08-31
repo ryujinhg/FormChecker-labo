@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -11,14 +12,13 @@
 
   <title>FormChecker - フォームチェッカー</title>
 
-
   <!-- =========================================================
        PWA設定
        ========================================================= -->
 
   <link
     rel="manifest"
-    href="manifest.json?v=2.2.1">
+    href="manifest.json?v=2.2.2">
 
   <link
     rel="apple-touch-icon"
@@ -347,14 +347,6 @@
 
     /* =========================================================
        カメラ診断モード
-       
-       ★今回追加
-       
-       左上に常時表示。
-       カメラ起動前は「カメラ未起動」。
-       
-       実際のカメラ情報を観察するための
-       開発・確認用表示。
        ========================================================= */
 
     .camera-diagnostic {
@@ -398,6 +390,7 @@
       pointer-events: auto;
       touch-action: pan-y;
       -webkit-overflow-scrolling: touch;
+
       box-shadow:
         0 3px 12px
         rgba(0, 0, 0, 0.35);
@@ -457,6 +450,81 @@
     .diagnostic-unavailable {
 
       color: #888;
+    }
+
+
+    /* =========================================================
+       ★ ISO実験ボタン
+       ========================================================= */
+
+    .iso-test-panel {
+
+      margin-top: 7px;
+
+      padding-top: 7px;
+
+      border-top:
+        1px solid
+        rgba(255,255,255,0.25);
+    }
+
+
+    .iso-test-title {
+
+      color: #ffcc00;
+
+      font-weight: bold;
+
+      margin-bottom: 5px;
+    }
+
+
+    .iso-test-buttons {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, 1fr);
+
+      gap: 4px;
+    }
+
+
+    .iso-test-button {
+
+      border: none;
+
+      border-radius: 5px;
+
+      padding: 6px 3px;
+
+      background: #3a3a3c;
+
+      color: #fff;
+
+      font-size: 0.72rem;
+
+      font-weight: bold;
+
+      cursor: pointer;
+    }
+
+
+    .iso-test-button:active {
+
+      background: #555;
+    }
+
+
+    .iso-test-result {
+
+      margin-top: 5px;
+
+      color: #00ff66;
+
+      font-size: 0.68rem;
+
+      line-height: 1.45;
     }
 
 
@@ -1281,10 +1349,7 @@
 
 
     <!-- =======================================================
-         ★ カメラ診断モード
-         
-         左上に表示。
-         カメラ起動後、自動的に情報が更新される。
+         カメラ診断
          ======================================================= -->
 
     <div
@@ -1304,6 +1369,71 @@
         <span class="diagnostic-unavailable">
           カメラ未起動
         </span>
+
+      </div>
+
+
+      <!-- =====================================================
+           ★ ISO変更実験
+           ===================================================== -->
+
+      <div class="iso-test-panel">
+
+        <div class="iso-test-title">
+          ISO変更テスト
+        </div>
+
+
+        <div class="iso-test-buttons">
+
+
+          <button
+            class="iso-test-button"
+            onclick="testISO(100)">
+
+            ISO 100
+
+          </button>
+
+
+          <button
+            class="iso-test-button"
+            onclick="testISO(400)">
+
+            ISO 400
+
+          </button>
+
+
+          <button
+            class="iso-test-button"
+            onclick="testISO(800)">
+
+            ISO 800
+
+          </button>
+
+
+          <button
+            class="iso-test-button"
+            onclick="testISO(1600)">
+
+            ISO 1600
+
+          </button>
+
+
+        </div>
+
+
+        <div
+          id="isoTestResult"
+          class="iso-test-result">
+
+          カメラ起動後に
+          ISO変更をテストできます。
+
+        </div>
 
       </div>
 
@@ -1352,7 +1482,6 @@
     <div
       id="recIndicator"
       class="rec-indicator">
-
 
       <div class="rec-dot"></div>
 
@@ -1851,7 +1980,7 @@
 
 
     /* =========================================================
-       ★ カメラ診断用DOM
+       カメラ診断用DOM
        ========================================================= */
 
     const cameraDiagnostic =
@@ -1863,6 +1992,12 @@
     const diagnosticContent =
       document.getElementById(
         'diagnosticContent'
+      );
+
+
+    const isoTestResult =
+      document.getElementById(
+        'isoTestResult'
       );
 
 
@@ -1884,13 +2019,7 @@
 
 
     /* =========================================================
-       ★ 実測FPS計測用
-       
-       requestVideoFrameCallback が使えるブラウザでは
-       「実際に動画フレームが表示された回数」を測る。
-       
-       これが使えないブラウザでは、
-       requestAnimationFrameによる近似値を使用する。
+       実測FPS
        ========================================================= */
 
     let measuredFPS = 0;
@@ -2144,7 +2273,6 @@
 
           motionLevel;
 
-
       }
 
     );
@@ -2203,7 +2331,6 @@
 
         );
 
-
       }
 
 
@@ -2249,7 +2376,6 @@
           moveDelay
 
         );
-
 
       }
 
@@ -2386,7 +2512,7 @@
 
 
     /* =========================================================
-       ★ 診断表示用：値を安全に文字列化
+       診断表示用：値を安全に文字列化
        ========================================================= */
 
     function diagnosticValue(
@@ -2485,14 +2611,7 @@
 
 
     /* =========================================================
-       ★ シャッター速度表示
-       
-       exposureTime は「秒」で返される場合がある。
-       
-       例：
-       0.033333
-       ↓
-       1/30
+       シャッター速度表示
        ========================================================= */
 
     function formatShutter(
@@ -2536,9 +2655,7 @@
 
 
     /* =========================================================
-       ★ 実測FPS
-       
-       requestVideoFrameCallback版
+       実測FPS
        ========================================================= */
 
     function startRealFPSMeasurement() {
@@ -2619,18 +2736,10 @@
             countVideoFrame
           );
 
-
       }
 
       else {
 
-
-        /*
-         * 古いブラウザ用の予備処理。
-         *
-         * requestVideoFrameCallbackがない場合は
-         * requestAnimationFrameで近似する。
-         */
 
         function countAnimationFrame(
           now
@@ -2689,7 +2798,7 @@
 
 
     /* =========================================================
-       ★ 実測FPS停止
+       実測FPS停止
        ========================================================= */
 
     function stopRealFPSMeasurement() {
@@ -2739,13 +2848,7 @@
 
 
     /* =========================================================
-       ★ 診断情報
-       
-       getSettings()
-       getCapabilities()
-       getConstraints()
-       
-       の3種類を調べる。
+       診断情報
        ========================================================= */
 
     let diagnosticTimer = null;
@@ -2813,7 +2916,7 @@
 
 
     /* =========================================================
-       ★ 診断情報更新
+       診断情報更新
        ========================================================= */
 
     function updateCameraDiagnostic() {
@@ -2860,10 +2963,6 @@
         tracks[0];
 
 
-      /* =======================================================
-         現在の設定
-         ======================================================= */
-
       let settings = {};
 
 
@@ -2880,10 +2979,6 @@
       }
 
 
-      /* =======================================================
-         カメラが対応できる範囲
-         ======================================================= */
-
       let capabilities = {};
 
 
@@ -2899,10 +2994,6 @@
         capabilities = {};
       }
 
-
-      /* =======================================================
-         アプリが要求している設定
-         ======================================================= */
 
       let constraints = {};
 
@@ -2923,9 +3014,7 @@
       let html = '';
 
 
-      /* =======================================================
-         現在のカメラ
-         ======================================================= */
+      /* 現在のカメラ */
 
       html +=
 
@@ -2988,9 +3077,7 @@
         '<br>';
 
 
-      /* =======================================================
-         露出
-         ======================================================= */
+      /* 露出 */
 
       html +=
 
@@ -3107,9 +3194,7 @@
       }
 
 
-      /* =======================================================
-         フォーカス
-         ======================================================= */
+      /* フォーカス */
 
       html +=
 
@@ -3140,9 +3225,7 @@
         '<br>';
 
 
-      /* =======================================================
-         ホワイトバランス
-         ======================================================= */
+      /* ホワイトバランス */
 
       html +=
 
@@ -3173,9 +3256,7 @@
         '<br>';
 
 
-      /* =======================================================
-         その他の現在値
-         ======================================================= */
+      /* その他 */
 
       html +=
 
@@ -3206,9 +3287,7 @@
         '<br>';
 
 
-      /* =======================================================
-         カメラ対応範囲
-         ======================================================= */
+      /* カメラ対応範囲 */
 
       html +=
 
@@ -3355,9 +3434,7 @@
       }
 
 
-      /* =======================================================
-         アプリからの要求
-         ======================================================= */
+      /* アプリからの要求 */
 
       html +=
 
@@ -3372,14 +3449,7 @@
         );
 
 
-      /* =======================================================
-         getSettings() の全項目
-         
-         ★ここが今回の「全部調べる」の重要部分。
-         
-         ブラウザが将来新しい項目を返しても、
-         ここには自動的に表示される。
-         ======================================================= */
+      /* 全項目 */
 
       html +=
 
@@ -3400,7 +3470,217 @@
 
 
     /* =========================================================
-       ★ 診断開始
+       ★ ISO変更実験
+       
+       track.applyConstraints()
+       
+       でISOを指定し、
+       その直後にgetSettings().isoを再取得する。
+       ========================================================= */
+
+    async function testISO(
+      isoValue
+    ) {
+
+
+      if (
+        !mediaStream
+      ) {
+
+
+        isoTestResult.innerText =
+          'カメラが起動していません。';
+
+
+        return;
+      }
+
+
+      const tracks =
+        mediaStream.getVideoTracks();
+
+
+      if (
+        !tracks ||
+        tracks.length === 0
+      ) {
+
+
+        isoTestResult.innerText =
+          '映像トラックがありません。';
+
+
+        return;
+      }
+
+
+      const track =
+        tracks[0];
+
+
+      let capabilities = {};
+
+
+      try {
+
+        capabilities =
+          track.getCapabilities();
+
+      }
+
+      catch (e) {
+
+        capabilities = {};
+      }
+
+
+      if (
+        !capabilities.iso
+      ) {
+
+
+        isoTestResult.innerText =
+          'このブラウザではISOの対応範囲を取得できません。';
+
+
+        return;
+      }
+
+
+      const minISO =
+        capabilities.iso.min;
+
+
+      const maxISO =
+        capabilities.iso.max;
+
+
+      if (
+        isoValue < minISO ||
+        isoValue > maxISO
+      ) {
+
+
+        isoTestResult.innerText =
+
+          `指定ISO ${isoValue} は対応範囲外です。` +
+
+          ` 対応範囲：${minISO} ～ ${maxISO}`;
+
+        return;
+      }
+
+
+      isoTestResult.innerText =
+
+        `ISO ${isoValue} を指定しています...`;
+
+
+      try {
+
+
+        await track.applyConstraints({
+
+          advanced: [
+
+            {
+              iso: isoValue
+            }
+
+          ]
+
+        });
+
+
+        /*
+         * 少し待ってから実際の設定を読む。
+         */
+
+        await new Promise(
+
+          resolve =>
+            setTimeout(
+              resolve,
+              300
+            )
+
+        );
+
+
+        const settings =
+          track.getSettings();
+
+
+        if (
+          typeof settings.iso ===
+          'number'
+        ) {
+
+
+          isoTestResult.innerText =
+
+            `指定：ISO ${isoValue}` +
+            ` / 実際：ISO ${settings.iso}`;
+
+
+          if (
+            settings.iso === isoValue
+          ) {
+
+
+            isoTestResult.innerText +=
+              '　→ ★変更成功★';
+
+          }
+
+          else {
+
+
+            isoTestResult.innerText +=
+              '　→ 指定値とは異なります';
+
+          }
+
+        }
+
+        else {
+
+
+          isoTestResult.innerText =
+
+            `指定：ISO ${isoValue}` +
+            ' / 実際：取得不可';
+
+        }
+
+
+        updateCameraDiagnostic();
+
+      }
+
+
+      catch (err) {
+
+
+        console.log(
+          'ISO change error:',
+          err
+        );
+
+
+        isoTestResult.innerText =
+
+          `ISO ${isoValue} に変更できませんでした。` +
+
+          ` [${err.name}]`;
+
+      }
+
+    }
+
+
+    /* =========================================================
+       診断開始
        ========================================================= */
 
     function startCameraDiagnostic() {
@@ -3411,18 +3691,6 @@
 
       updateCameraDiagnostic();
 
-
-      /*
-       * 500msごとに更新。
-       *
-       * これにより、暗い場所へ移動したときなどに
-       *
-       * ISO
-       * シャッター
-       * FPS
-       *
-       * などが変化する場合、その変化を観察できる。
-       */
 
       diagnosticTimer =
 
@@ -3437,7 +3705,7 @@
 
 
     /* =========================================================
-       ★ 診断停止
+       診断停止
        ========================================================= */
 
     function stopCameraDiagnostic() {
@@ -3528,12 +3796,6 @@
       try {
 
 
-        /* =====================================================
-           カメラ要求
-           
-           1920×1080 / 60fpsを理想値として要求。
-           ===================================================== */
-
         mediaStream =
 
           await navigator.mediaDevices
@@ -3576,16 +3838,8 @@
         await webcam.play();
 
 
-        /* =====================================================
-           ★ 実測FPS測定開始
-           ===================================================== */
-
         startRealFPSMeasurement();
 
-
-        /* =====================================================
-           モーション検知用Canvas
-           ===================================================== */
 
         motionCanvas.width =
           160;
@@ -3593,10 +3847,6 @@
         motionCanvas.height =
           120;
 
-
-        /* =====================================================
-           ★ カメラ診断開始
-           ===================================================== */
 
         startCameraDiagnostic();
 
@@ -4311,6 +4561,7 @@
 
             ) {
 
+
               setStandbyState();
 
             }
@@ -4604,6 +4855,7 @@
             recordedChunks.push(
               e.data
             );
+
           }
 
         };
@@ -5021,3 +5273,4 @@
 </body>
 
 </html>
+```
