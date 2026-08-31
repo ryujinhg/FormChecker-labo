@@ -1,0 +1,3489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>FormChecker - フォームチェッカー</title>
+
+  <!-- PWA設定 -->
+  <link rel="manifest" href="manifest.json?v=2.2.0">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#1e1e1e">
+
+  <style>
+
+    /* =========================================================
+       基本設定
+       ========================================================= */
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #121212;
+      color: #fff;
+      font-family: -apple-system, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5%;
+      gap: 8px;
+    }
+
+    /* =========================================================
+       ヘッダー
+       ========================================================= */
+
+    header {
+      width: 100%;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      color: #4da6ff;
+      letter-spacing: 1px;
+    }
+
+    /* =========================================================
+       ステータス
+       ========================================================= */
+
+    .status-banner {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .status-text {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #00ffcc;
+    }
+
+    .status-sub {
+      font-size: 0.75rem;
+      color: #aaa;
+      line-height: 1.5;
+    }
+
+    .btn-top-action {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-start {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-reset {
+      background: #3a3a3c;
+      color: #bbb;
+    }
+
+    /* =========================================================
+       カメラ許可案内
+       ========================================================= */
+
+    .camera-help {
+      display: none;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .camera-help.show {
+      display: block;
+    }
+
+    .camera-help-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #ffcc00;
+      margin-bottom: 6px;
+    }
+
+    .camera-help-message {
+      font-size: 0.78rem;
+      color: #ddd;
+      line-height: 1.55;
+      margin-bottom: 8px;
+    }
+
+    .camera-help-details {
+      display: none;
+      background: #292929;
+      border-radius: 7px;
+      padding: 9px;
+      margin-top: 6px;
+      text-align: left;
+    }
+
+    .camera-help-details.show {
+      display: block;
+    }
+
+    .camera-help-details h3 {
+      font-size: 0.82rem;
+      color: #4da6ff;
+      margin-bottom: 5px;
+    }
+
+    .camera-help-details p {
+      font-size: 0.74rem;
+      color: #ddd;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .camera-help-details p:last-child {
+      margin-bottom: 0;
+    }
+
+    .btn-help {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #3a3a3c;
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-retry {
+      background: #007bff;
+      color: white;
+    }
+
+    /* =========================================================
+       メイン映像エリア
+       ========================================================= */
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      min-height: 40vh;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    video,
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* =========================================================
+       ★ 実fps表示
+       
+       カメラ映像の左上に表示する。
+       今回の測定では「要求したfps」ではなく、
+       実際にvideoへ届いたフレームを数える。
+       ========================================================= */
+
+    .fps-indicator {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+
+      background: rgba(0, 0, 0, 0.65);
+      color: #00ff66;
+
+      padding: 5px 9px;
+      border-radius: 6px;
+
+      font-size: 0.78rem;
+      font-weight: bold;
+
+      line-height: 1.45;
+
+      z-index: 40;
+
+      pointer-events: none;
+
+      white-space: nowrap;
+    }
+
+    .fps-value {
+      color: #00ff66;
+    }
+
+    .fps-info {
+      color: #aaa;
+      font-size: 0.68rem;
+      font-weight: normal;
+    }
+
+    /* =========================================================
+       録画表示
+       ========================================================= */
+
+    .rec-indicator {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 0, 0, 0.8);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      z-index: 15;
+    }
+
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: blink 0.8s infinite alternate;
+    }
+
+    @keyframes blink {
+
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0.2;
+      }
+
+    }
+
+    /* =========================================================
+       モーション検知表示
+       ========================================================= */
+
+    .motion-zone-text {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      color: #ffd700;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 10;
+      letter-spacing: 0.5px;
+    }
+
+    .motion-zone-text.ready {
+      color: #ff00ff;
+    }
+
+    /* =========================================================
+       カウントダウン
+       ========================================================= */
+
+    .countdown-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 5rem;
+      font-weight: 900;
+      color: #ff3366;
+
+      text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+
+      z-index: 20;
+
+      pointer-events: none;
+
+      opacity: 0;
+
+      transition: opacity 0.2s ease;
+    }
+
+    .countdown-overlay.show {
+      opacity: 1;
+    }
+
+    /* =========================================================
+       プログレスバー
+       ========================================================= */
+
+    .progress-bar-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+
+      background: rgba(255, 255, 255, 0.2);
+
+      z-index: 25;
+
+      display: none;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: #ff3366;
+    }
+
+    .progress-bar.animate-rec {
+      width: 100%;
+      transition-property: width;
+      transition-timing-function: linear;
+    }
+
+    /* =========================================================
+       設定パネル
+       ========================================================= */
+
+    .controls-panel {
+      width: 100%;
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 8px;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: 4px;
+
+      flex-shrink: 0;
+
+      transition: opacity 0.2s ease;
+    }
+
+    .controls-panel.hidden {
+      display: none;
+    }
+
+    .setting-row {
+
+      /*
+       * 縦画面でも横画面と同じ考え方にする。
+       *
+       * ① ラベル
+       * ② -
+       * ③ 数値
+       * ④ +
+       *
+       * ラベル部分を1frにすることで、
+       * 「録画時間」などがその領域の中央に配置される。
+       */
+
+      display: grid;
+
+      grid-template-columns:
+        minmax(100px, 1fr)
+        44px
+        80px
+        44px;
+
+      column-gap: 8px;
+
+      align-items: center;
+
+      background: #2a2a2a;
+
+      padding: 4px 8px;
+
+      border-radius: 6px;
+    }
+
+    .setting-label {
+
+      font-size: 0.85rem;
+
+      font-weight: bold;
+
+      white-space: nowrap;
+
+      /*
+       * ラベル領域の中央に文字を置く。
+       */
+      text-align: center;
+    }
+
+    .stepper {
+      display: contents;
+    }
+
+    .stepper .btn-step:first-child {
+      grid-column: 2;
+    }
+
+    .stepper .value-display {
+      grid-column: 3;
+    }
+
+    .stepper .btn-step:last-child {
+      grid-column: 4;
+    }
+
+    .btn-step {
+
+      width: 44px;
+      height: 36px;
+
+      border-radius: 6px;
+
+      border: none;
+
+      background: #3a3a3c;
+
+      color: #fff;
+
+      font-size: 1.1rem;
+
+      font-weight: bold;
+
+      cursor: pointer;
+    }
+
+    .btn-step:active {
+      background: #555;
+    }
+
+    .value-display {
+
+      width: 80px;
+      min-width: 80px;
+
+      font-size: 0.9rem;
+
+      font-weight: bold;
+
+      color: #00d2ff;
+
+      text-align: center;
+    }
+
+    /* =========================================================
+       横画面
+       ========================================================= */
+
+    @media (min-aspect-ratio: 1/1) {
+
+      body {
+
+        display: block;
+
+        padding: 0;
+
+        overflow: hidden;
+      }
+
+      .video-container {
+
+        position: fixed;
+
+        inset: 0;
+
+        width: 100vw;
+
+        height: 100dvh;
+
+        min-height: 0;
+
+        border-radius: 0;
+
+        z-index: 1;
+      }
+
+      video,
+      canvas {
+
+        width: 100%;
+        height: 100%;
+
+        object-fit: cover;
+      }
+
+      header {
+
+        position: fixed;
+
+        top: 8px;
+
+        right: 1.5vw;
+
+        width: 200px;
+
+        max-width: 42vw;
+
+        z-index: 50;
+
+        text-align: center;
+
+        pointer-events: none;
+      }
+
+      h1 {
+        font-size: 1.4rem;
+      }
+
+      .status-banner {
+
+        position: fixed;
+
+        top: 48px;
+
+        right: 1.5vw;
+
+        width: 200px;
+
+        max-width: 30vw;
+
+        padding: 10px;
+
+        z-index: 50;
+
+        background: rgba(30, 30, 30, 0.94);
+
+        border: 1px solid #333;
+
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+      }
+
+      .btn-top-action {
+        padding: 8px;
+      }
+
+      .status-text {
+        font-size: 1.05rem;
+      }
+
+      .status-sub {
+        font-size: 0.8rem;
+      }
+
+      .controls-panel {
+
+        position: fixed;
+
+        right: 1.5vw;
+
+        bottom: 1.5vh;
+
+        width: 320px;
+
+        max-width: 48vw;
+
+        padding: 8px;
+
+        z-index: 50;
+
+        background: rgba(30, 30, 30, 0.94);
+
+        border: 1px solid #333;
+
+        border-radius: 12px;
+
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+
+        gap: 5px;
+      }
+
+      .setting-row {
+
+        min-height: 44px;
+
+        padding: 4px 8px;
+
+        border-radius: 7px;
+      }
+
+      .setting-label {
+        font-size: 0.95rem;
+      }
+
+      .btn-step {
+
+        width: 44px;
+        height: 38px;
+
+        font-size: 1.1rem;
+      }
+
+      .value-display {
+
+        width: 80px;
+        min-width: 80px;
+
+        font-size: 0.95rem;
+
+        text-align: center;
+      }
+
+      .rec-indicator {
+
+        top: 15px;
+        left: 15px;
+      }
+
+      .motion-zone-text {
+
+        top: 15px;
+        right: 15px;
+      }
+
+      /*
+       * 横画面ではfps表示も少し内側へ。
+       */
+      .fps-indicator {
+
+        top: 15px;
+        left: 15px;
+      }
+
+      .countdown-overlay {
+        font-size: 7rem;
+      }
+
+      .progress-bar-container {
+        height: 6px;
+      }
+
+      .camera-help-details {
+
+        max-height: 55vh;
+
+        overflow-y: auto;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================================================
+       ① タイトル
+       ========================================================= -->
+
+  <header>
+
+    <h1>
+      FormChecker
+    </h1>
+
+  </header>
+
+
+  <!-- =========================================================
+       ② ボタン＆ステータス
+       ========================================================= -->
+
+  <div class="status-banner">
+
+    <button
+      id="mainBtn"
+      class="btn-top-action btn-start"
+      onclick="handleMainButtonClick()">
+
+      カメラを起動する
+
+    </button>
+
+
+    <div id="normalStatusArea">
+
+      <div
+        id="statusText"
+        class="status-text"
+        style="display:none;">
+
+      </div>
+
+      <div
+        id="statusSub"
+        class="status-sub">
+
+        端末を固定してご利用ください
+
+      </div>
+
+    </div>
+
+
+    <!-- =======================================================
+         カメラ許可案内
+         ======================================================= -->
+
+    <div
+      id="cameraHelp"
+      class="camera-help">
+
+      <div class="camera-help-title">
+
+        カメラの許可が必要です
+
+      </div>
+
+
+      <div
+        id="cameraHelpMessage"
+        class="camera-help-message">
+
+        FormCheckerはバッティングフォームを撮影するためにカメラを使用します。
+
+      </div>
+
+
+      <button
+        id="retryCameraBtn"
+        class="btn-help btn-retry"
+        onclick="retryCameraPermission()">
+
+        カメラを許可してもう一度試す
+
+      </button>
+
+
+      <button
+        id="helpToggleBtn"
+        class="btn-help"
+        style="margin-top:6px;"
+        onclick="toggleCameraHelp()">
+
+        使用方法を見る
+
+      </button>
+
+
+      <div
+        id="cameraHelpDetails"
+        class="camera-help-details">
+
+
+        <div id="androidHelp">
+
+          <h3>
+            Android / Chromeの場合
+          </h3>
+
+          <p>
+            まず、上の「カメラを許可してもう一度試す」を押してください。
+            Chromeからカメラの許可を求められたら「許可」を選んでください。
+          </p>
+
+          <p>
+            それでも表示されない場合：<br>
+            ① Chrome右上の「︙」<br>
+            ②「設定」<br>
+            ③「サイトの設定」<br>
+            ④「カメラ」<br>
+            ⑤ FormCheckerのサイトが「ブロック中」なら「許可」
+          </p>
+
+          <p>
+            設定を変更したら、この画面に戻って
+            「カメラを許可してもう一度試す」を押してください。
+          </p>
+
+        </div>
+
+
+        <div id="iphoneHelp">
+
+          <h3>
+            iPhone / Safariの場合
+          </h3>
+
+          <p>
+            まず、上の「カメラを許可してもう一度試す」を押してください。
+            Safariからカメラの許可を求められたら「許可」を選んでください。
+          </p>
+
+          <p>
+            それでも表示されない場合は、SafariのWebサイト設定で
+            カメラが「拒否」になっていないか確認してください。
+          </p>
+
+          <p>
+            SafariでFormCheckerを開いた状態から、
+            ページメニューの「Webサイトの設定」で
+            カメラの設定を確認することもできます。
+          </p>
+
+        </div>
+
+
+        <div id="otherHelp">
+
+          <h3>
+            カメラの許可について
+          </h3>
+
+          <p>
+            お使いのブラウザや端末によって、
+            カメラの許可方法が異なる場合があります。
+          </p>
+
+          <p>
+            FormCheckerはカメラの使用許可を確認してから撮影を開始します。
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       ③ メイン映像エリア
+       ========================================================= -->
+
+  <div class="video-container">
+
+
+    <video
+      id="webcam"
+      autoplay
+      playsinline
+      muted>
+    </video>
+
+
+    <video
+      id="playback"
+      loop
+      playsinline
+      muted
+      style="display:none;">
+    </video>
+
+
+    <canvas
+      id="motionCanvas"
+      style="display:none;">
+    </canvas>
+
+
+    <!-- =======================================================
+         ★ 実fps表示
+
+         左上に表示する。
+
+         FPSは実際にvideoへ到着したフレームを
+         requestVideoFrameCallback()で数えて計算する。
+         ======================================================= -->
+
+    <div
+      id="fpsIndicator"
+      class="fps-indicator">
+
+      FPS:
+      <span
+        id="fpsValue"
+        class="fps-value">
+
+        ---
+
+      </span>
+
+      <br>
+
+      <span
+        id="fpsInfo"
+        class="fps-info">
+
+        カメラ待機中
+
+      </span>
+
+    </div>
+
+
+    <!-- =======================================================
+         録画表示
+         ======================================================= -->
+
+    <div
+      id="recIndicator"
+      class="rec-indicator">
+
+      <div class="rec-dot"></div>
+
+      REC
+
+    </div>
+
+
+    <!-- =======================================================
+         モーション検知
+         ======================================================= -->
+
+    <div
+      id="motionZoneText"
+      class="motion-zone-text"
+      style="display:none;">
+
+      MOTION DETECTION
+
+    </div>
+
+
+    <!-- =======================================================
+         カウントダウン
+         ======================================================= -->
+
+    <div
+      id="countdownOverlay"
+      class="countdown-overlay">
+
+      3
+
+    </div>
+
+
+    <!-- =======================================================
+         プログレスバー
+         ======================================================= -->
+
+    <div
+      id="progressBarContainer"
+      class="progress-bar-container">
+
+      <div
+        id="progressBar"
+        class="progress-bar">
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       ④ 設定パネル
+       ========================================================= -->
+
+  <div
+    id="controlsPanel"
+    class="controls-panel">
+
+
+    <!-- 録画時間 -->
+
+    <div class="setting-row">
+
+      <span class="setting-label">
+
+        録画時間
+
+      </span>
+
+
+      <div class="stepper">
+
+        <button
+          class="btn-step"
+          onclick="adjustSetting('rec', -0.1)">
+
+          -
+
+        </button>
+
+
+        <span
+          id="recVal"
+          class="value-display">
+
+          1.8 秒
+
+        </span>
+
+
+        <button
+          class="btn-step"
+          onclick="adjustSetting('rec', 0.1)">
+
+          +
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- 移動待機時間 -->
+
+    <div class="setting-row">
+
+      <span class="setting-label">
+
+        移動待機時間
+
+      </span>
+
+
+      <div class="stepper">
+
+        <button
+          class="btn-step"
+          onclick="adjustSetting('move', -0.5)">
+
+          -
+
+        </button>
+
+
+        <span
+          id="moveVal"
+          class="value-display">
+
+          3.0 秒
+
+        </span>
+
+
+        <button
+          class="btn-step"
+          onclick="adjustSetting('move', 0.5)">
+
+          +
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- 再生速度 -->
+
+    <div class="setting-row">
+
+      <span class="setting-label">
+
+        再生速度
+
+      </span>
+
+
+      <div class="stepper">
+
+        <button
+          class="btn-step"
+          onclick="toggleSpeed(-1)">
+
+          &lt;
+
+        </button>
+
+
+        <span
+          id="speedVal"
+          class="value-display">
+
+          0.25x
+
+        </span>
+
+
+        <button
+          class="btn-step"
+          onclick="toggleSpeed(1)">
+
+          &gt;
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- 検知レベル -->
+
+    <div class="setting-row">
+
+      <span class="setting-label">
+
+        検知レベル
+
+      </span>
+
+
+      <div class="stepper">
+
+        <button
+          class="btn-step"
+          onclick="adjustSetting('sensitivity', -5)">
+
+          -
+
+        </button>
+
+
+        <span
+          id="sensitivityVal"
+          class="value-display">
+
+          50
+
+        </span>
+
+
+        <button
+          class="btn-step"
+          onclick="adjustSetting('sensitivity', 5)">
+
+          +
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       JavaScript
+       ========================================================= -->
+
+  <script>
+
+
+    /* =========================================================
+       設定値
+       ========================================================= */
+
+    let recordDuration =
+      parseFloat(
+        localStorage.getItem(
+          'formchecker_rec'
+        )
+      ) || 1.8;
+
+
+    let moveDelay =
+      parseFloat(
+        localStorage.getItem(
+          'formchecker_move'
+        )
+      ) || 3.0;
+
+
+    let speedIndex =
+      parseInt(
+        localStorage.getItem(
+          'formchecker_speedIndex'
+        ),
+        10
+      );
+
+
+    if (isNaN(speedIndex)) {
+
+      speedIndex = 1;
+
+    }
+
+
+    let motionLevel =
+      parseInt(
+        localStorage.getItem(
+          'formchecker_sensitivity'
+        ),
+        10
+      );
+
+
+    if (isNaN(motionLevel)) {
+
+      motionLevel = 50;
+
+    }
+
+
+    const speedOptions = [
+      0.15,
+      0.25,
+      0.5,
+      1.0
+    ];
+
+
+    /* =========================================================
+       状態
+       ========================================================= */
+
+    const STATE = {
+
+      INIT: 'INIT',
+
+      STANDBY: 'STANDBY',
+
+      READY: 'READY',
+
+      COUNTDOWN: 'COUNTDOWN',
+
+      RECORDING: 'RECORDING',
+
+      MOVING: 'MOVING',
+
+      PLAYBACK: 'PLAYBACK'
+
+    };
+
+
+    let currentState =
+      STATE.INIT;
+
+
+    /* =========================================================
+       タイマー
+       ========================================================= */
+
+    let readyTimeoutTimer = null;
+
+    let countdownInterval = null;
+
+    let recTimeoutTimer = null;
+
+    let recAnimTimer = null;
+
+    let moveIntervalTimer = null;
+
+    let motionFrameId = null;
+
+
+    /* =========================================================
+       DOM
+       ========================================================= */
+
+    const webcam =
+      document.getElementById(
+        'webcam'
+      );
+
+
+    const playback =
+      document.getElementById(
+        'playback'
+      );
+
+
+    const motionCanvas =
+      document.getElementById(
+        'motionCanvas'
+      );
+
+
+    const motionCtx =
+      motionCanvas.getContext(
+        '2d',
+        {
+          willReadFrequently: true
+        }
+      );
+
+
+    const motionZoneText =
+      document.getElementById(
+        'motionZoneText'
+      );
+
+
+    const countdownOverlay =
+      document.getElementById(
+        'countdownOverlay'
+      );
+
+
+    const recIndicator =
+      document.getElementById(
+        'recIndicator'
+      );
+
+
+    const mainBtn =
+      document.getElementById(
+        'mainBtn'
+      );
+
+
+    const statusText =
+      document.getElementById(
+        'statusText'
+      );
+
+
+    const statusSub =
+      document.getElementById(
+        'statusSub'
+      );
+
+
+    const progressBarContainer =
+      document.getElementById(
+        'progressBarContainer'
+      );
+
+
+    const progressBar =
+      document.getElementById(
+        'progressBar'
+      );
+
+
+    const controlsPanel =
+      document.getElementById(
+        'controlsPanel'
+      );
+
+
+    const normalStatusArea =
+      document.getElementById(
+        'normalStatusArea'
+      );
+
+
+    const cameraHelp =
+      document.getElementById(
+        'cameraHelp'
+      );
+
+
+    const cameraHelpDetails =
+      document.getElementById(
+        'cameraHelpDetails'
+      );
+
+
+    const helpToggleBtn =
+      document.getElementById(
+        'helpToggleBtn'
+      );
+
+
+    const androidHelp =
+      document.getElementById(
+        'androidHelp'
+      );
+
+
+    const iphoneHelp =
+      document.getElementById(
+        'iphoneHelp'
+      );
+
+
+    const otherHelp =
+      document.getElementById(
+        'otherHelp'
+      );
+
+
+    /* =========================================================
+       ★ FPS測定用DOM
+       ========================================================= */
+
+    const fpsValue =
+      document.getElementById(
+        'fpsValue'
+      );
+
+
+    const fpsInfo =
+      document.getElementById(
+        'fpsInfo'
+      );
+
+
+    /* =========================================================
+       録画関連
+       ========================================================= */
+
+    let mediaStream = null;
+
+    let mediaRecorder = null;
+
+    let recordedChunks = [];
+
+
+    let prevFrameData = null;
+
+    let ignoreMotionUntil = 0;
+
+
+    let recordedBlobUrl = null;
+
+
+    /* =========================================================
+       ★ 実fps測定用変数
+       =========================================================
+
+       requestVideoFrameCallback() が呼ばれるたびに
+       frameCount を1増やす。
+
+       約1秒経過したところで、
+
+       フレーム数 ÷ 経過時間
+
+       を計算する。
+
+       これによって「実際に届いたfps」を測定する。
+       ========================================================= */
+
+    let fpsFrameCount = 0;
+
+    let fpsStartTime = null;
+
+    let fpsCallbackId = null;
+
+
+    /* =========================================================
+       端末判定
+       ========================================================= */
+
+    function detectDevice() {
+
+      const ua =
+        navigator.userAgent ||
+        navigator.vendor ||
+        window.opera ||
+        '';
+
+
+      const isAndroid =
+        /Android/i.test(ua);
+
+
+      const isIOS =
+        /iPhone|iPad|iPod/i.test(ua) ||
+        (
+          navigator.platform === 'MacIntel' &&
+          navigator.maxTouchPoints > 1
+        );
+
+
+      if (isAndroid) {
+
+        return 'android';
+
+      }
+
+
+      if (isIOS) {
+
+        return 'iphone';
+
+      }
+
+
+      return 'other';
+
+    }
+
+
+    /* =========================================================
+       カメラ案内表示
+       ========================================================= */
+
+    function showCameraHelp() {
+
+      currentState =
+        STATE.INIT;
+
+
+      controlsPanel.classList.add(
+        'hidden'
+      );
+
+
+      normalStatusArea.style.display =
+        'none';
+
+
+      cameraHelp.classList.add(
+        'show'
+      );
+
+
+      mainBtn.innerText =
+        'カメラを許可してもう一度試す';
+
+
+      mainBtn.className =
+        'btn-top-action btn-retry';
+
+
+      cameraHelpDetails.classList.remove(
+        'show'
+      );
+
+
+      helpToggleBtn.innerText =
+        '使用方法を見る';
+
+
+      const device =
+        detectDevice();
+
+
+      androidHelp.style.display =
+        device === 'android'
+          ? 'block'
+          : 'none';
+
+
+      iphoneHelp.style.display =
+        device === 'iphone'
+          ? 'block'
+          : 'none';
+
+
+      otherHelp.style.display =
+        device === 'other'
+          ? 'block'
+          : 'none';
+
+    }
+
+
+    /* =========================================================
+       カメラ案内を閉じる
+       ========================================================= */
+
+    function hideCameraHelp() {
+
+      cameraHelp.classList.remove(
+        'show'
+      );
+
+
+      normalStatusArea.style.display =
+        'block';
+
+
+      mainBtn.innerText =
+        '撮影待機に戻る';
+
+
+      mainBtn.className =
+        'btn-top-action btn-reset';
+
+    }
+
+
+    /* =========================================================
+       使用方法を見る
+       ========================================================= */
+
+    function toggleCameraHelp() {
+
+      const isShown =
+        cameraHelpDetails.classList.contains(
+          'show'
+        );
+
+
+      if (isShown) {
+
+        cameraHelpDetails.classList.remove(
+          'show'
+        );
+
+
+        helpToggleBtn.innerText =
+          '使用方法を見る';
+
+      }
+
+      else {
+
+        cameraHelpDetails.classList.add(
+          'show'
+        );
+
+
+        helpToggleBtn.innerText =
+          '使用方法を閉じる';
+
+      }
+
+    }
+
+
+    /* =========================================================
+       検知レベル
+       ========================================================= */
+
+    function getMotionThreshold() {
+
+      const minThresh = 0.01;
+
+      const maxThresh = 0.30;
+
+
+      return maxThresh -
+        (
+          motionLevel / 100
+        ) *
+        (
+          maxThresh - minThresh
+        );
+
+    }
+
+
+    /* =========================================================
+       ★ 実fps測定開始
+       =========================================================
+
+       カメラ映像がvideo要素に入ってきたとき、
+       requestVideoFrameCallback() が呼ばれる。
+
+       これを利用して実際のフレーム数を測定する。
+
+       注意：
+       「60fpsを要求した」ではなく、
+       「実際に何フレーム届いたか」を測る。
+       ========================================================= */
+
+    function startFPSMeasurement() {
+
+      /*
+       * 古い測定を停止。
+       */
+      stopFPSMeasurement();
+
+
+      /*
+       * ブラウザが
+       * requestVideoFrameCallback()
+       * に対応しているか確認。
+       */
+
+      if (
+        typeof webcam.requestVideoFrameCallback !==
+        'function'
+      ) {
+
+        fpsValue.innerText =
+          '測定不可';
+
+        fpsInfo.innerText =
+          'ブラウザ非対応';
+
+        return;
+
+      }
+
+
+      /*
+       * カウンターを初期化。
+       */
+
+      fpsFrameCount = 0;
+
+      fpsStartTime = null;
+
+
+      /*
+       * 1フレームごとに呼ばれる関数。
+       */
+
+      function countFrame(
+        now,
+        metadata
+      ) {
+
+        /*
+         * 最初のフレームで測定開始時刻を記録。
+         */
+
+        if (fpsStartTime === null) {
+
+          fpsStartTime = now;
+
+        }
+
+
+        fpsFrameCount++;
+
+
+        /*
+         * 測定開始からの経過時間。
+         */
+
+        const elapsed =
+          now - fpsStartTime;
+
+
+        /*
+         * 約1秒ごとにfpsを計算。
+         */
+
+        if (elapsed >= 1000) {
+
+          const fps =
+            fpsFrameCount /
+            (elapsed / 1000);
+
+
+          /*
+           * 小数1桁で表示。
+           */
+
+          fpsValue.innerText =
+            fps.toFixed(1);
+
+
+          /*
+           * カメラの実際の設定値も取得。
+           */
+
+          if (mediaStream) {
+
+            const tracks =
+              mediaStream.getVideoTracks();
+
+
+            if (
+              tracks.length > 0
+            ) {
+
+              const settings =
+                tracks[0].getSettings();
+
+
+              let info = '';
+
+
+              if (
+                settings.width &&
+                settings.height
+              ) {
+
+                info =
+                  settings.width +
+                  '×' +
+                  settings.height;
+
+              }
+
+
+              /*
+               * getSettings() のframeRateは
+               * 「実測値」ではなく、
+               * カメラトラックの設定値。
+               *
+               * そのため、ここでは
+               * 実測fpsとは別に扱う。
+               */
+
+              if (
+                settings.frameRate
+              ) {
+
+                info +=
+                  ' / 設定 ' +
+                  settings.frameRate.toFixed(1) +
+                  'fps';
+
+              }
+
+
+              fpsInfo.innerText =
+                info;
+
+            }
+
+          }
+
+
+          /*
+           * 次の約1秒の測定へ。
+           */
+
+          fpsFrameCount = 0;
+
+          fpsStartTime = now;
+
+        }
+
+
+        /*
+         * 次のフレームを測定。
+         */
+
+        fpsCallbackId =
+          webcam.requestVideoFrameCallback(
+            countFrame
+          );
+
+      }
+
+
+      /*
+       * 最初の測定を開始。
+       */
+
+      fpsCallbackId =
+        webcam.requestVideoFrameCallback(
+          countFrame
+        );
+
+    }
+
+
+    /* =========================================================
+       ★ 実fps測定停止
+       ========================================================= */
+
+    function stopFPSMeasurement() {
+
+      /*
+       * requestVideoFrameCallback() は
+       * cancelVideoFrameCallback() で停止できる。
+       */
+
+      if (
+        fpsCallbackId !== null &&
+        typeof webcam.cancelVideoFrameCallback ===
+        'function'
+      ) {
+
+        webcam.cancelVideoFrameCallback(
+          fpsCallbackId
+        );
+
+      }
+
+
+      fpsCallbackId = null;
+
+      fpsFrameCount = 0;
+
+      fpsStartTime = null;
+
+    }
+
+
+    /* =========================================================
+       初期表示
+       ========================================================= */
+
+    window.addEventListener(
+      'DOMContentLoaded',
+      () => {
+
+        document.getElementById(
+          'recVal'
+        ).innerText =
+          recordDuration.toFixed(1) +
+          ' 秒';
+
+
+        document.getElementById(
+          'moveVal'
+        ).innerText =
+          moveDelay.toFixed(1) +
+          ' 秒';
+
+
+        document.getElementById(
+          'speedVal'
+        ).innerText =
+          speedOptions[speedIndex] +
+          'x';
+
+
+        document.getElementById(
+          'sensitivityVal'
+        ).innerText =
+          motionLevel;
+
+      }
+    );
+
+
+    /* =========================================================
+       設定変更
+       ========================================================= */
+
+    function adjustSetting(
+      type,
+      delta
+    ) {
+
+      if (type === 'rec') {
+
+        recordDuration =
+          Math.max(
+            0.5,
+            Math.min(
+              5.0,
+              parseFloat(
+                (
+                  recordDuration +
+                  delta
+                ).toFixed(1)
+              )
+            )
+          );
+
+
+        document.getElementById(
+          'recVal'
+        ).innerText =
+          recordDuration.toFixed(1) +
+          ' 秒';
+
+
+        localStorage.setItem(
+          'formchecker_rec',
+          recordDuration
+        );
+
+      }
+
+
+      else if (type === 'move') {
+
+        moveDelay =
+          Math.max(
+            0.5,
+            Math.min(
+              10.0,
+              parseFloat(
+                (
+                  moveDelay +
+                  delta
+                ).toFixed(1)
+              )
+            )
+          );
+
+
+        document.getElementById(
+          'moveVal'
+        ).innerText =
+          moveDelay.toFixed(1) +
+          ' 秒';
+
+
+        localStorage.setItem(
+          'formchecker_move',
+          moveDelay
+        );
+
+      }
+
+
+      else if (
+        type === 'sensitivity'
+      ) {
+
+        motionLevel =
+          Math.max(
+            0,
+            Math.min(
+              100,
+              motionLevel +
+              delta
+            )
+          );
+
+
+        document.getElementById(
+          'sensitivityVal'
+        ).innerText =
+          motionLevel;
+
+
+        localStorage.setItem(
+          'formchecker_sensitivity',
+          motionLevel
+        );
+
+      }
+
+    }
+
+
+    /* =========================================================
+       再生速度
+       ========================================================= */
+
+    function toggleSpeed(dir) {
+
+      speedIndex =
+        (
+          speedIndex +
+          dir +
+          speedOptions.length
+        ) %
+        speedOptions.length;
+
+
+      document.getElementById(
+        'speedVal'
+      ).innerText =
+        speedOptions[speedIndex] +
+        'x';
+
+
+      if (
+        currentState ===
+        STATE.PLAYBACK
+      ) {
+
+        playback.playbackRate =
+          speedOptions[speedIndex];
+
+      }
+
+
+      localStorage.setItem(
+        'formchecker_speedIndex',
+        speedIndex
+      );
+
+    }
+
+
+    /* =========================================================
+       音声
+       ========================================================= */
+
+    function speak(
+      text,
+      lang = 'en-US'
+    ) {
+
+      if (
+        text &&
+        'speechSynthesis' in window
+      ) {
+
+        window.speechSynthesis.cancel();
+
+
+        const uttr =
+          new SpeechSynthesisUtterance(
+            text
+          );
+
+
+        uttr.lang =
+          lang;
+
+
+        window.speechSynthesis.speak(
+          uttr
+        );
+
+      }
+
+    }
+
+
+    /* =========================================================
+       メインボタン
+       ========================================================= */
+
+    function handleMainButtonClick() {
+
+      if (
+        currentState ===
+        STATE.INIT
+      ) {
+
+        initCamera();
+
+      }
+
+      else {
+
+        resetToStandby();
+
+      }
+
+    }
+
+
+    /* =========================================================
+       カメラ再試行
+       ========================================================= */
+
+    function retryCameraPermission() {
+
+      initCamera();
+
+    }
+
+
+    /* =========================================================
+       カメラ起動
+       ========================================================= */
+
+    async function initCamera() {
+
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+      ) {
+
+        showCameraHelp();
+
+
+        document.getElementById(
+          'cameraHelpMessage'
+        ).innerText =
+          'このブラウザではカメラを利用できません。ChromeまたはSafariなど、カメラに対応したブラウザでお試しください。';
+
+
+        return;
+
+      }
+
+
+      try {
+
+        /*
+         * 1920×1080 / 60fps は
+         * 「理想値」として要求する。
+         *
+         * 実際のfpsは端末・カメラ・明るさなどによって
+         * 変わる可能性がある。
+         */
+
+        mediaStream =
+          await navigator.mediaDevices.getUserMedia({
+
+            video: {
+
+              facingMode:
+                'environment',
+
+              width: {
+                ideal: 1920
+              },
+
+              height: {
+                ideal: 1080
+              },
+
+              frameRate: {
+                ideal: 60
+              }
+
+            },
+
+            audio: false
+
+          });
+
+
+        webcam.srcObject =
+          mediaStream;
+
+
+        await webcam.play();
+
+
+        /*
+         * モーション検知用キャンバス。
+         *
+         * カメラ映像そのものは1920×1080等で取得し、
+         * モーション検知だけ160×120に縮小して処理する。
+         */
+
+        motionCanvas.width =
+          160;
+
+        motionCanvas.height =
+          120;
+
+
+        /*
+         * カメラ起動成功。
+         */
+
+        hideCameraHelp();
+
+
+        mainBtn.innerText =
+          '撮影待機に戻る';
+
+
+        mainBtn.className =
+          'btn-top-action btn-reset';
+
+
+        statusText.style.display =
+          'block';
+
+
+        statusText.innerText =
+          'カメラ準備完了';
+
+
+        statusText.style.color =
+          '#00ffcc';
+
+
+        statusSub.innerText =
+          '端末を固定してご利用ください';
+
+
+        /*
+         * ★ カメラ起動直後から
+         * 実fps測定を開始。
+         */
+
+        fpsValue.innerText =
+          '測定中';
+
+
+        fpsInfo.innerText =
+          '実フレーム測定中';
+
+
+        startFPSMeasurement();
+
+
+        setStandbyState();
+
+      }
+
+
+      catch (err) {
+
+        console.log(
+          'Camera error:',
+          err.name,
+          err.message
+        );
+
+
+        /*
+         * エラー時はfps測定も停止。
+         */
+
+        stopFPSMeasurement();
+
+
+        if (mediaStream) {
+
+          mediaStream
+            .getTracks()
+            .forEach(
+              track =>
+                track.stop()
+            );
+
+
+          mediaStream = null;
+
+        }
+
+
+        webcam.srcObject =
+          null;
+
+
+        showCameraHelp();
+
+
+        const message =
+          document.getElementById(
+            'cameraHelpMessage'
+          );
+
+
+        if (
+          err.name ===
+            'NotAllowedError' ||
+          err.name ===
+            'PermissionDeniedError'
+        ) {
+
+          message.innerText =
+            'カメラの使用が許可されていません。上のボタンを押して、カメラの使用を許可してください。';
+
+        }
+
+
+        else if (
+          err.name ===
+          'NotFoundError'
+        ) {
+
+          message.innerText =
+            'カメラが見つかりませんでした。カメラが利用できる端末・ブラウザでお試しください。';
+
+        }
+
+
+        else if (
+          err.name ===
+          'NotReadableError'
+        ) {
+
+          message.innerText =
+            'カメラを使用できませんでした。他のアプリがカメラを使用していないか確認してください。';
+
+        }
+
+
+        else if (
+          err.name ===
+          'SecurityError'
+        ) {
+
+          message.innerText =
+            'ブラウザのセキュリティ設定によりカメラを使用できませんでした。使用方法をご確認ください。';
+
+        }
+
+
+        else {
+
+          message.innerText =
+            'カメラの使用を開始できませんでした。カメラの許可を確認して、もう一度お試しください。';
+
+        }
+
+      }
+
+    }
+
+
+    /* =========================================================
+       プログレスバー
+       ========================================================= */
+
+    function resetProgressBar() {
+
+      progressBar.style.transitionDuration =
+        '0s';
+
+
+      progressBar.classList.remove(
+        'animate-rec'
+      );
+
+
+      progressBar.style.width =
+        '0%';
+
+
+      progressBarContainer.style.display =
+        'none';
+
+    }
+
+
+    /* =========================================================
+       タイマー全消去
+       ========================================================= */
+
+    function clearAllTimers() {
+
+      if (readyTimeoutTimer) {
+
+        clearTimeout(
+          readyTimeoutTimer
+        );
+
+        readyTimeoutTimer = null;
+
+      }
+
+
+      if (countdownInterval) {
+
+        clearInterval(
+          countdownInterval
+        );
+
+        countdownInterval = null;
+
+      }
+
+
+      if (recTimeoutTimer) {
+
+        clearTimeout(
+          recTimeoutTimer
+        );
+
+        recTimeoutTimer = null;
+
+      }
+
+
+      if (recAnimTimer) {
+
+        clearTimeout(
+          recAnimTimer
+        );
+
+        recAnimTimer = null;
+
+      }
+
+
+      if (moveIntervalTimer) {
+
+        clearInterval(
+          moveIntervalTimer
+        );
+
+        moveIntervalTimer = null;
+
+      }
+
+    }
+
+
+    /* =========================================================
+       モーション検知停止
+       ========================================================= */
+
+    function stopMotionDetection() {
+
+      if (
+        motionFrameId !== null
+      ) {
+
+        cancelAnimationFrame(
+          motionFrameId
+        );
+
+
+        motionFrameId =
+          null;
+
+      }
+
+    }
+
+
+    /* =========================================================
+       STANDBY
+       ========================================================= */
+
+    function setStandbyState() {
+
+      currentState =
+        STATE.STANDBY;
+
+
+      clearAllTimers();
+
+      stopMotionDetection();
+
+
+      prevFrameData =
+        null;
+
+
+      controlsPanel.classList.remove(
+        'hidden'
+      );
+
+
+      if (recordedBlobUrl) {
+
+        URL.revokeObjectURL(
+          recordedBlobUrl
+        );
+
+
+        recordedBlobUrl =
+          null;
+
+      }
+
+
+      playback.pause();
+
+
+      playback.style.display =
+        'none';
+
+
+      webcam.style.display =
+        'block';
+
+
+      recIndicator.style.display =
+        'none';
+
+
+      resetProgressBar();
+
+
+      motionZoneText.style.display =
+        'block';
+
+
+      motionZoneText.classList.remove(
+        'ready'
+      );
+
+
+      motionZoneText.innerText =
+        'MOTION DETECTION';
+
+
+      countdownOverlay.classList.remove(
+        'show'
+      );
+
+
+      statusText.innerText =
+        '検知スタンバイ中';
+
+
+      statusText.style.color =
+        '#00ffcc';
+
+
+      statusSub.innerText =
+        '画面全体で動作を検知すると準備完了になります';
+
+
+      ignoreMotionUntil =
+        Date.now() + 1500;
+
+
+      startMotionDetection();
+
+    }
+
+
+    /* =========================================================
+       リセット
+       ========================================================= */
+
+    function resetToStandby() {
+
+      clearAllTimers();
+
+
+      if (
+        currentState ===
+        STATE.RECORDING
+      ) {
+
+        currentState =
+          STATE.STANDBY;
+
+      }
+
+
+      if (
+        mediaRecorder &&
+        mediaRecorder.state !==
+        'inactive'
+      ) {
+
+        mediaRecorder.stop();
+
+      }
+
+
+      setStandbyState();
+
+    }
+
+
+    /* =========================================================
+       モーション検知
+       ========================================================= */
+
+    function startMotionDetection() {
+
+      stopMotionDetection();
+
+
+      function checkMotion() {
+
+        if (
+          currentState !==
+            STATE.STANDBY &&
+          currentState !==
+            STATE.READY &&
+          currentState !==
+            STATE.PLAYBACK
+        ) {
+
+          motionFrameId =
+            null;
+
+
+          return;
+
+        }
+
+
+        if (
+          webcam.readyState ===
+          webcam.HAVE_ENOUGH_DATA
+        ) {
+
+          motionCtx.drawImage(
+            webcam,
+            0,
+            0,
+            motionCanvas.width,
+            motionCanvas.height
+          );
+
+
+          const roiX = 0;
+
+          const roiY = 0;
+
+          const roiW =
+            motionCanvas.width;
+
+          const roiH =
+            motionCanvas.height;
+
+
+          const currentFrame =
+            motionCtx.getImageData(
+              roiX,
+              roiY,
+              roiW,
+              roiH
+            );
+
+
+          if (
+            prevFrameData &&
+            Date.now() >
+              ignoreMotionUntil
+          ) {
+
+            let diffCount = 0;
+
+
+            for (
+              let i = 0;
+              i <
+              currentFrame.data.length;
+              i += 4
+            ) {
+
+              const diff =
+                Math.abs(
+                  currentFrame.data[i] -
+                  prevFrameData.data[i]
+                ) +
+
+                Math.abs(
+                  currentFrame.data[i + 1] -
+                  prevFrameData.data[i + 1]
+                ) +
+
+                Math.abs(
+                  currentFrame.data[i + 2] -
+                  prevFrameData.data[i + 2]
+                );
+
+
+              if (
+                diff > 100
+              ) {
+
+                diffCount++;
+
+              }
+
+            }
+
+
+            const motionRatio =
+              diffCount /
+              (roiW * roiH);
+
+
+            if (
+              motionRatio >
+              getMotionThreshold()
+            ) {
+
+              if (
+                currentState ===
+                STATE.STANDBY
+              ) {
+
+                setReadyState();
+
+                return;
+
+              }
+
+
+              else if (
+                currentState ===
+                STATE.READY
+              ) {
+
+                startCountdownSequence();
+
+                return;
+
+              }
+
+
+              else if (
+                currentState ===
+                STATE.PLAYBACK
+              ) {
+
+                setStandbyState();
+
+                return;
+
+              }
+
+            }
+
+          }
+
+
+          prevFrameData =
+            currentFrame;
+
+        }
+
+
+        motionFrameId =
+          requestAnimationFrame(
+            checkMotion
+          );
+
+      }
+
+
+      motionFrameId =
+        requestAnimationFrame(
+          checkMotion
+        );
+
+    }
+
+
+    /* =========================================================
+       READY
+       ========================================================= */
+
+    function setReadyState() {
+
+      currentState =
+        STATE.READY;
+
+
+      controlsPanel.classList.add(
+        'hidden'
+      );
+
+
+      motionZoneText.classList.add(
+        'ready'
+      );
+
+
+      motionZoneText.innerText =
+        'READY';
+
+
+      statusText.innerText =
+        'READY';
+
+
+      statusText.style.color =
+        '#ff00ff';
+
+
+      statusSub.innerText =
+        'もう一度動作を検知するとカウントダウンを開始します';
+
+
+      speak(
+        'Ready',
+        'en-US'
+      );
+
+
+      ignoreMotionUntil =
+        Date.now() + 1000;
+
+
+      clearAllTimers();
+
+
+      readyTimeoutTimer =
+        setTimeout(
+          () => {
+
+            if (
+              currentState ===
+              STATE.READY
+            ) {
+
+              setStandbyState();
+
+            }
+
+          },
+          10000
+        );
+
+
+      startMotionDetection();
+
+    }
+
+
+    /* =========================================================
+       カウントダウン
+       ========================================================= */
+
+    function startCountdownSequence() {
+
+      currentState =
+        STATE.COUNTDOWN;
+
+
+      clearAllTimers();
+
+      stopMotionDetection();
+
+
+      motionZoneText.style.display =
+        'none';
+
+
+      statusText.innerText =
+        'カウントダウン中...';
+
+
+      statusText.style.color =
+        '#ffcc00';
+
+
+      let count = 3;
+
+
+      countdownOverlay.innerText =
+        count;
+
+
+      countdownOverlay.classList.add(
+        'show'
+      );
+
+
+      speak(
+        'Three',
+        'en-US'
+      );
+
+
+      countdownInterval =
+        setInterval(
+          () => {
+
+            count--;
+
+
+            if (count > 0) {
+
+              countdownOverlay.innerText =
+                count;
+
+
+              if (
+                count === 2
+              ) {
+
+                speak(
+                  'Two',
+                  'en-US'
+                );
+
+              }
+
+
+              if (
+                count === 1
+              ) {
+
+                speak(
+                  'One',
+                  'en-US'
+                );
+
+              }
+
+            }
+
+
+            else {
+
+              clearInterval(
+                countdownInterval
+              );
+
+
+              countdownInterval =
+                null;
+
+
+              countdownOverlay.classList.remove(
+                'show'
+              );
+
+
+              startRecording();
+
+            }
+
+          },
+          1000
+        );
+
+    }
+
+
+    /* =========================================================
+       録画開始
+       ========================================================= */
+
+    function startRecording() {
+
+      currentState =
+        STATE.RECORDING;
+
+
+      recordedChunks =
+        [];
+
+
+      statusText.innerText =
+        '録画中';
+
+
+      statusText.style.color =
+        '#ff3366';
+
+
+      recIndicator.style.display =
+        'flex';
+
+
+      resetProgressBar();
+
+
+      progressBarContainer.style.display =
+        'block';
+
+
+      progressBar.style.backgroundColor =
+        '#ff3366';
+
+
+      recAnimTimer =
+        setTimeout(
+          () => {
+
+            if (
+              currentState ===
+              STATE.RECORDING
+            ) {
+
+              progressBar.style.transitionDuration =
+                `${recordDuration}s`;
+
+
+              progressBar.classList.add(
+                'animate-rec'
+              );
+
+            }
+
+          },
+          10
+        );
+
+
+      let options = {};
+
+
+      if (
+        MediaRecorder.isTypeSupported(
+          'video/webm;codecs=vp8'
+        )
+      ) {
+
+        options = {
+
+          mimeType:
+            'video/webm;codecs=vp8'
+
+        };
+
+      }
+
+
+      else if (
+        MediaRecorder.isTypeSupported(
+          'video/mp4'
+        )
+      ) {
+
+        options = {
+
+          mimeType:
+            'video/mp4'
+
+        };
+
+      }
+
+
+      try {
+
+        mediaRecorder =
+          new MediaRecorder(
+            mediaStream,
+            options
+          );
+
+      }
+
+
+      catch (e) {
+
+        mediaRecorder =
+          new MediaRecorder(
+            mediaStream
+          );
+
+      }
+
+
+      mediaRecorder.ondataavailable =
+        (e) => {
+
+          if (
+            e.data &&
+            e.data.size > 0
+          ) {
+
+            recordedChunks.push(
+              e.data
+            );
+
+          }
+
+        };
+
+
+      mediaRecorder.onstop =
+        () => {
+
+          recIndicator.style.display =
+            'none';
+
+
+          resetProgressBar();
+
+
+          const wasRecording =
+            currentState ===
+            STATE.RECORDING;
+
+
+          mediaRecorder =
+            null;
+
+
+          if (wasRecording) {
+
+            startMoveDelayPhase();
+
+          }
+
+        };
+
+
+      mediaRecorder.start(100);
+
+
+      recTimeoutTimer =
+        setTimeout(
+          () => {
+
+            if (
+              mediaRecorder &&
+              mediaRecorder.state ===
+              'recording'
+            ) {
+
+              mediaRecorder.stop();
+
+            }
+
+          },
+          recordDuration * 1000
+        );
+
+    }
+
+
+    /* =========================================================
+       移動待機
+       ========================================================= */
+
+    function startMoveDelayPhase() {
+
+      currentState =
+        STATE.MOVING;
+
+
+      statusText.innerText =
+        '画像確認待機中...';
+
+
+      statusText.style.color =
+        '#00d2ff';
+
+
+      resetProgressBar();
+
+
+      let timeLeft =
+        moveDelay;
+
+
+      countdownOverlay.innerText =
+        Math.ceil(
+          timeLeft
+        );
+
+
+      countdownOverlay.classList.add(
+        'show'
+      );
+
+
+      moveIntervalTimer =
+        setInterval(
+          () => {
+
+            timeLeft -=
+              0.5;
+
+
+            if (
+              timeLeft > 0
+            ) {
+
+              countdownOverlay.innerText =
+                Math.ceil(
+                  timeLeft
+                );
+
+            }
+
+
+            else {
+
+              clearInterval(
+                moveIntervalTimer
+              );
+
+
+              moveIntervalTimer =
+                null;
+
+
+              countdownOverlay.classList.remove(
+                'show'
+              );
+
+
+              startPlaybackPhase();
+
+            }
+
+          },
+          500
+        );
+
+    }
+
+
+    /* =========================================================
+       再生
+       ========================================================= */
+
+    function startPlaybackPhase() {
+
+      currentState =
+        STATE.PLAYBACK;
+
+
+      const mimeType =
+        recordedChunks[0]?.type ||
+        'video/webm';
+
+
+      const blob =
+        new Blob(
+          recordedChunks,
+          {
+            type:
+              mimeType
+          }
+        );
+
+
+      recordedBlobUrl =
+        URL.createObjectURL(
+          blob
+        );
+
+
+      playback.src =
+        recordedBlobUrl;
+
+
+      playback.playbackRate =
+        speedOptions[speedIndex];
+
+
+      webcam.style.display =
+        'none';
+
+
+      playback.style.display =
+        'block';
+
+
+      resetProgressBar();
+
+
+      progressBarContainer.style.display =
+        'block';
+
+
+      progressBar.style.backgroundColor =
+        '#00ff66';
+
+
+      playback.ontimeupdate =
+        () => {
+
+          if (
+            playback.duration
+          ) {
+
+            const progress =
+              (
+                playback.currentTime /
+                playback.duration
+              ) * 100;
+
+
+            progressBar.style.width =
+              progress +
+              '%';
+
+          }
+
+        };
+
+
+      playback.play()
+        .then(
+          () => {
+
+            statusText.innerText =
+              `スロー再生中 (${speedOptions[speedIndex]}x)`;
+
+
+            statusText.style.color =
+              '#00ff66';
+
+
+            statusSub.innerText =
+              '画面全体で動作を検知すると次の撮影へ進みます';
+
+
+            motionZoneText.style.display =
+              'none';
+
+
+            ignoreMotionUntil =
+              Date.now() + 1500;
+
+
+            startMotionDetection();
+
+          }
+        )
+        .catch(
+          err => {
+
+            console.log(
+              'Playback error:',
+              err
+            );
+
+
+            alert(
+              '動画の再生に失敗しました。'
+            );
+
+
+            setStandbyState();
+
+          }
+        );
+
+    }
+
+
+    /* =========================================================
+       Service Worker
+       ========================================================= */
+
+    if (
+      'serviceWorker' in navigator
+    ) {
+
+      window.addEventListener(
+        'load',
+        () => {
+
+          navigator.serviceWorker
+            .register(
+              'service-worker.js'
+            )
+            .then(
+              registration => {
+
+                registration.onupdatefound =
+                  () => {
+
+                    const installingWorker =
+                      registration.installing;
+
+
+                    if (
+                      installingWorker !=
+                      null
+                    ) {
+
+                      installingWorker.onstatechange =
+                        () => {
+
+                          if (
+                            installingWorker.state ===
+                            'installed'
+                          ) {
+
+                            if (
+                              navigator
+                                .serviceWorker
+                                .controller
+                            ) {
+
+                              window.location.reload();
+
+                            }
+
+                          }
+
+                        };
+
+                    }
+
+                  };
+
+              }
+            )
+            .catch(
+              err => {
+
+                console.log(
+                  'Service Worker registration failed:',
+                  err
+                );
+
+              }
+            );
+
+        }
+      );
+
+    }
+
+  </script>
+
+</body>
+</html>
